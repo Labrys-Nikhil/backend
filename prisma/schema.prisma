@@ -1,0 +1,278 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model alerts {
+  id                  Int            @id @default(autoincrement())
+  name                String?
+  deviceId            Int
+  operator            String
+  value               Int
+  bitwiseOperator     String
+  readingBeforeAlerts Int
+  device              device         @relation(fields: [deviceId], references: [id], map: "Alerts_deviceId_fkey")
+  autodownlink        autodownlink?
+  notification        notification[]
+
+  @@index([deviceId], map: "Alerts_deviceId_idx")
+}
+
+model autodownlink {
+  id                 Int      @id @default(autoincrement())
+  alertId            Int      @unique(map: "AutoDownlink_alertId_key")
+  timeout            Int?
+  schedule           Int?
+  port               Int
+  downlinkController String
+  classType          String
+  devEui             String
+  pdu                String
+  createdAt          DateTime @default(now())
+  alerts             alerts   @relation(fields: [alertId], references: [id], map: "AutoDownlink_alertId_fkey")
+
+  @@index([alertId], map: "AutoDownlink_alertId_idx")
+}
+
+model customer {
+  id                   Int            @id @default(autoincrement())
+  firstName            String         @db.VarChar(50)
+  lastName             String         @db.VarChar(50)
+  image                String?        @db.VarChar(255)
+  companyName          String?        @db.VarChar(100)
+  password             String         @db.VarChar(255)
+  countryCode          String         @db.VarChar(10)
+  phoneNumber          String         @db.VarChar(20)
+  email                String         @unique(map: "Customer_email_key") @db.VarChar(100)
+  role                 String         @default("customer")
+  createdAt            DateTime       @default(now())
+  isDeleted            Boolean        @default(false)
+  isVerified           Boolean        @default(false)
+  isOrgnizationCreated Boolean        @default(false)
+  organization         organization[]
+  projects             projects[]
+}
+
+model deviceattribute {
+  id       Int    @id @default(autoincrement())
+  name     String
+  value    String
+  deviceId Int
+  device   device @relation(fields: [deviceId], references: [id], map: "DeviceAttribute_deviceId_fkey")
+
+  @@index([deviceId], map: "DeviceAttribute_deviceId_fkey")
+}
+
+model devicedecodedata {
+  id              Int      @id @default(autoincrement())
+  devEui          String
+  attributesName  String
+  attributesValue String
+  timestamp       DateTime @default(now())
+  deviceId        Int?
+  attributesUnits String?
+}
+
+model deviceserverdata {
+  id          Int      @id @default(autoincrement())
+  devEui      String
+  ack         Boolean
+  appEui      String
+  channel     Int
+  datarate    Int
+  devClass    String
+  devProfile  String
+  devType     String
+  dup         Boolean
+  estLat      Float
+  estLng      Float
+  freq        Float
+  gwEui       String
+  gwRxTime    DateTime
+  ismBand     String
+  joinId      Int
+  maxPayload  Int
+  pdu         String
+  port        Int
+  rssi        Int
+  seqno       Int
+  snr         Float
+  txtime      DateTime
+  deviceId    Int?
+  decodedData Json?
+}
+
+model downlinkdevice {
+  id                 Int      @id @default(autoincrement())
+  devEui             String
+  downlinkController String
+  classType          String
+  pdu                String
+  confirmed          Boolean  @default(false)
+  timeoutMinutes     Int      @default(5)
+  port               String
+  payload            String
+  deviceId           Int?
+  device             device?  @relation(fields: [deviceId], references: [id], map: "DownlinkDevice_deviceId_fkey")
+  createdAt          DateTime @default(now())
+
+  @@index([deviceId], map: "DownlinkDevice_deviceId_fkey")
+}
+
+model hardware {
+  id                 Int                  @id @default(autoincrement())
+  organizationId     Int                  @default(0)
+  imageKey           String?
+  imageLocation      String?
+  name               String
+  type               String
+  description        String?
+  modelNo            String
+  manufacturerId     Int
+  tagId              Int
+  gpsSupported       Boolean              @default(true)
+  configured         Boolean
+  createdAt          DateTime             @default(now())
+  device             device[]
+  hardwareattributes hardwareattributes[]
+  hardwareoutput     hardwareoutput[]
+}
+
+model hardwareattributes {
+  id         Int      @id @default(autoincrement())
+  key        String
+  value      String
+  hardwareId Int
+  hardware   hardware @relation(fields: [hardwareId], references: [id], map: "HardwareAttributes_hardwareId_fkey")
+
+  @@index([hardwareId], map: "HardwareAttributes_hardwareId_fkey")
+}
+
+model hardwareoutput {
+  id         Int      @id @default(autoincrement())
+  hardwareId Int
+  outputId   Int
+  createdAt  DateTime @default(now())
+  hardware   hardware @relation(fields: [hardwareId], references: [id], map: "HardwareOutput_hardwareId_fkey")
+  output     output   @relation(fields: [outputId], references: [id], map: "HardwareOutput_outputId_fkey")
+
+  @@index([hardwareId], map: "HardwareOutput_hardwareId_fkey")
+  @@index([outputId], map: "HardwareOutput_outputId_fkey")
+}
+
+model notification {
+  id        Int      @id @default(autoincrement())
+  message   String
+  deviceId  Int
+  alertId   Int?
+  createdAt DateTime @default(now())
+  alerts    alerts?  @relation(fields: [alertId], references: [id], map: "Notification_alertId_fkey")
+  device    device   @relation(fields: [deviceId], references: [id], map: "Notification_deviceId_fkey")
+
+  @@index([alertId], map: "Notification_alertId_fkey")
+  @@index([deviceId], map: "Notification_deviceId_idx")
+}
+
+model organization {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  description String   @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  customerId  Int
+  device      device[]
+  customer    customer @relation(fields: [customerId], references: [id], map: "Organization_customerId_fkey")
+
+  @@index([customerId], map: "Organization_customerId_idx")
+}
+
+model output {
+  id             Int              @id @default(autoincrement())
+  name           String
+  code           String           @default("function(packet, deviceAttributes, nonLoRaWANDeviceConfig) { return; }")
+  createdAt      DateTime         @default(now())
+  hardwareoutput hardwareoutput[]
+}
+
+model projects {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  solutions  String   @db.VarChar(255)
+  area       String   @db.VarChar(100)
+  setLimit   Int
+  createdAt  DateTime @default(now())
+  customerId Int
+  estLat     Float
+  estLng     Float
+  device     device[]
+  customer   customer @relation(fields: [customerId], references: [id], map: "Projects_customerId_fkey")
+
+  @@index([customerId], map: "Projects_customerId_idx")
+}
+
+model timezone {
+  id     Int    @id @default(autoincrement())
+  name   String @db.VarChar(100)
+  offset Int?
+}
+
+model device {
+  id                   Int    @id @default(autoincrement())
+  name                 String
+  manufacture          String
+  deviceLocation       String
+  currentLocation      String
+  hardwareId           Int
+  networkId            Int
+  organizationId       Int
+  projectId            Int
+  hardwareOutputId     Int?
+  deviceId             String @unique
+  location             String
+  hardwareType         String @default("LoraWan")
+  network              String @default("SENRA")
+  deviceHardwaretypeId Int // Link to deviceHardwareType
+
+  alerts          alerts[]
+  hardware        hardware          @relation(fields: [hardwareId], references: [id], map: "Device_hardwareId_fkey")
+  organization    organization      @relation(fields: [organizationId], references: [id], map: "Device_organizationId_fkey")
+  projects        projects          @relation(fields: [projectId], references: [id], map: "Device_projectId_fkey")
+  deviceattribute deviceattribute[]
+  downlinkdevice  downlinkdevice[]
+  notification    notification[]
+
+  // Corrected relation to deviceHardwareType as a single field reference
+  deviceHardwareType deviceHardwareType @relation(fields: [deviceHardwaretypeId], references: [id], map: "Device_deviceHardwareTypeId_fkey")
+
+  @@index([hardwareId], map: "Device_hardwareId_fkey")
+  @@index([organizationId], map: "Device_organizationId_idx")
+  @@index([projectId], map: "Device_projectId_idx")
+}
+
+model deviceHardwareType {
+  id             Int      @id @default(autoincrement())
+  manufacturerId Int
+  manufacturer   String   @db.VarChar(100)
+  output         String?  @db.VarChar(255) // Only for controllers
+  devices        device[] // Relation back to device
+
+  // Additional fields or constraints can be added as necessary
+}
+
+model AutoDownlinkWithDelay {
+  id                 Int      @id @default(autoincrement())
+  downlinkController String
+  isActive           Boolean
+  timeoutMinutes     Int
+  classType          String
+  port               Int
+  deviceId           Int
+  devEui             String
+  pdu                String
+  isProcessing       Boolean  @default(false) // Default value
+  createdAt          DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
