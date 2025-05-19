@@ -1,4 +1,6 @@
 const outputService = require('../services/outputService')
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const createOutput = async (req, res) => {
     try {
@@ -41,7 +43,7 @@ const updateOutput = async (req, res) => {
     try {
         const { id } = req.params;
         const outputData = req.body;
-        
+
         const updatedOutput = await outputService.updateOutput(id, outputData);
         res.status(200).json({ success: true, data: updatedOutput });
     } catch (error) {
@@ -60,10 +62,146 @@ const deleteOutput = async (req, res) => {
     }
 };
 
+const getOutputsByDeviceId = async (req, res) => {
+    try {
+        const { id } = req.params; // Get deviceId from request params
+
+        if (!id) {
+            return res.status(400).json({ error: 'Device ID is required' });
+        }
+
+        // Fetch outputs associated with the given device ID
+        const outputs = await prisma.output.findMany({
+            where: {
+                deviceId: parseInt(id), // Ensure deviceId is passed as a number
+            },
+        });
+
+        return res.status(200).json(outputs);
+    } catch (error) {
+        console.error('Error fetching outputs:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+
+const LocationBasesOnCustomerId = async (req,res) => {
+
+    const {projectId} = req.params;
+    const customerId = req.user.id; // Extracted from JWT token
+    console.log("req user", customerId);
+    try {
+        const organization = await prisma.organization.findFirst({
+            where: { customerId: customerId }
+        });
+        console.log("customer data", organization);
+        const organizationId = organization.id;
+        const LocationName = await prisma.device.findMany({
+            where: {
+                organizationId: organizationId,
+                projectId:parseInt(projectId)
+            },
+        });
+        console.log("location name array",LocationName);
+        res.json(LocationName);
+    } catch (error) {
+        console.error('Error fetching hardware data:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
+// const outputBasesOnCustomerId = async (req,res) => {
+
+//     const customerId = req.user.id; // Extracted from JWT token
+//     console.log("req user", customerId);
+//     try {
+//         const organization = await prisma.organization.findFirst({
+//             where: { customerId: customerId }
+//         });
+//         console.log("customer data", organization);
+//         const organizationId = organization.id;
+//         const devices = await prisma.device.findMany({
+//             where: {
+//                 organizationId: organizationId,
+//             },
+//             select:{
+//                 id : true,
+//             }
+//         });
+//         console.log("deviceId name array",devices);
+//         const output = await prisma.output.findMany({
+//             where:{
+//                 deviceId
+//             }
+//         })
+//         res.json(devices);
+//     } catch (error) {
+//         console.error('Error fetching hardware data:', error);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// }
+
+const outputBasesOnCustomerId = async (req, res) => {
+    const customerId = req.user.id; // Extracted from JWT token
+    console.log("req user", customerId);
+  
+    try {
+      // Fetch the organization associated with the customer ID
+      const organization = await prisma.organization.findFirst({
+        where: { customerId: customerId },
+      });
+  
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+  
+      console.log("customer data", organization);
+      const organizationId = organization.id;
+  
+      // Fetch all device IDs for the organization
+      const devices = await prisma.device.findMany({
+        where: {
+          organizationId: organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+  
+      console.log("deviceId name array", devices);
+  
+      if (devices.length === 0) {
+        return res.status(404).json({ message: "No devices found" });
+      }
+  
+      // Extract device IDs into an array
+      const deviceIds = devices.map((device) => device.id);
+  
+      // Fetch all outputs corresponding to the device IDs
+      const outputs = await prisma.output.findMany({
+        where: {
+          deviceId: {
+            in: deviceIds, // Match any of the device IDs
+          },
+        },
+      });
+  
+      console.log("outputs based on device IDs", outputs);
+  
+      res.json(outputs);
+    } catch (error) {
+      console.error("Error fetching output data:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  };
+  
 module.exports = {
     createOutput,
     getAllOutputs,
     getOutputById,
     updateOutput,
     deleteOutput,
+    getOutputsByDeviceId,
+    LocationBasesOnCustomerId,
+    outputBasesOnCustomerId
 };

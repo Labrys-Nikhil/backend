@@ -3,17 +3,17 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 // Create an AutoDownlink record
-async function createAutoDownlink(alertId, timeout, schedule, port, downlinkController, classType, devEui, pdu) {
+async function createAutoDownlink(alertId, timeout, schedule, port, controllerList, classType, device, pdu) {
   try {
     const autoDownlink = await prisma.autodownlink.create({
       data: {
         alertId,
-        timeout,
-        schedule,
-        port,
-        downlinkController,
+        timeout:Number(timeout),
+        schedule:Number(schedule),
+        port:Number(port),
+        downlinkController:controllerList,
         classType,
-        devEui,
+        devEui:device,
         pdu
       }
     });
@@ -81,3 +81,4 @@ module.exports = {
   updateAutoDownlink,
   deleteAutoDownlink
 };
+

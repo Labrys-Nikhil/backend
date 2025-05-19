@@ -76,5 +76,6 @@ module.exports = {
     getAllHardwareControllers,
     getHardwareControllerById,
     updateHardwareController,
-    deleteHardwareController,
+    deleteHardwareController
 };
+

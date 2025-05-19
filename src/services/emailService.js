@@ -29,12 +29,12 @@ exports.sendVerificationMail = async (name, email, userId) => {
       subject: "Welcome to Our Platform - Verify Your Email",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
-          <img src="https://drive.google.com/uc?export=view&id=1PwcqAoe_Mzn66wg_Nwv4rAEXHK5zG51b" alt="Logo" style="width: 100px; margin-bottom: 20px;">
+          <img src="https://www.smartlynk.net/images/smart.jpg" alt="Logo" style="width: 100px; margin-bottom: 20px;">
           <h1 style="color: #333;">Welcome to Our Platform</h1>
           <p style="color: #666; font-size: 16px;"> 
             Hi ${name}, Thanks for signing up! We just need you to verify your email address to complete your account setup.
           </p>
-          <a href="http://ec2-13-232-66-69.ap-south-1.compute.amazonaws.com:8091/api/customers-verify/${userId}" 
+          <a href="https://soodprints.in:8091/api/customers-verify/${userId}" 
              style="display: inline-block; background-color: #0B8EB6; color: white; padding: 10px 20px; 
                     text-decoration: none; font-size: 18px; border-radius: 5px; margin-top: 20px;">
             Verify Email
@@ -64,7 +64,7 @@ exports.sendAlertMail = async (name, email, alertDetails, deviceName, deviceEui)
       subject: "Alert: Action Required for Your Device",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; text-align: center;">
-          <img src="https://drive.google.com/uc?export=view&id=1PwcqAoe_Mzn66wg_Nwv4rAEXHK5zG51b" alt="Logo" style="width: 100px; margin-bottom: 20px;">
+          <img src="https://www.smartlynk.net/images/smart.jpg" alt="Logo" style="width: 100px; margin-bottom: 20px;">
           <h1 style="color: #ff4d4d;">Important Device Alert</h1>
           <p style="color: #666; font-size: 16px;">
             Hi ${name},<br>

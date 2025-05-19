@@ -1,11 +1,12 @@
 const autoDownlinkService = require('../services/autoDownlinkService');
 // Create a new AutoDownlink
 const createAutoDownlink =  async (req, res) => {
-    const { alertId, timeout, schedule, port, downlinkController, classType, devEui, pdu } = req.body;
+    const { alertId, timeout, schedule, port, controllerList, classType, device, controllerValue } = req.body;
+    console.log("------------------->",req.body);
 
     try {
         const autoDownlink = await autoDownlinkService.createAutoDownlink(
-            alertId, timeout, schedule, port, downlinkController, classType, devEui, pdu
+            alertId, timeout, schedule, port, controllerList, classType, device, controllerValue
         );
         res.status(201).json(autoDownlink);
     } catch (error) {
@@ -55,3 +56,4 @@ const deleteAutoDownlink =  async (req, res) => {
 };
 
 module.exports = {deleteAutoDownlink,updateAutoDownlink,getAutoDownlinkByAlertId,createAutoDownlink};
+

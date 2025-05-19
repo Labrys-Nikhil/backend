@@ -8,6 +8,8 @@ const bcrypt = require('bcrypt');
 const emailService = require('../services/emailService');
 const logger = require('../utils/logger');
 const { upload, deleteImage } = require('../helper/imageHelper');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const path = require('path');
 require("dotenv").config()
 
@@ -119,7 +121,7 @@ const loginCustomer = async (req, res) => {
       return res.status(404).json({ success: false, message: "Customer node --trace-warningsnot found" });
     }
 
-    // Check if the customer is verified
+    // Check customer is verified
     if (!customer.isVerified) {
       return res.status(403).json({ success: false, message: "Customer is not verified. Please verify your email before logging in." });
     }
@@ -132,7 +134,7 @@ const loginCustomer = async (req, res) => {
     }
 
     // Generate a JWT token (Replace 'secretkey' with your actual secret or use environment variables)
-    const token = jwt.sign({ id: customer.id, email: customer.email, role: customer.role }, process.env.JWT_SECRET_KEY, { expiresIn: '15d' });
+    const token = jwt.sign({ id: customer.id, firstName:customer.firstName,lastName:customer.lastName,email: customer.email, role: customer.role }, process.env.JWT_SECRET_KEY, { expiresIn: '15d' });
 
     // Return success response with the JWT token
     res.status(200).json({ success: true, message: "Login successful", token });
@@ -140,6 +142,31 @@ const loginCustomer = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+const logoutCustomer = async (req, res)=> {
+  const token = req.headers.authorization?.split(' ')[1]; // Assuming the token is sent as a Bearer token
+
+  if (!token) return res.status(400).json({ error: 'Token is required' });
+
+  try {
+    // Verify the token
+    const decoded = jwt.verify(token,process.env.JWT_SECRET_KEY);
+
+    // Add the token to the blacklist with expiration time
+    await prisma.tokenblacklist.create({
+      data: {
+        token,
+        expiresAt: new Date(decoded.exp * 1000), // Convert expiration time from seconds to Date
+      },
+    });
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+}
 
 
 const verifyEmail = async (req, res) => {
@@ -303,6 +330,7 @@ module.exports = {
   getCustomerById,
   verifyCustomer,
   loginCustomer,
+  logoutCustomer,
   verifyEmail,
   resendVerificationMail,
   forgetPassword,

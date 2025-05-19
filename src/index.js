@@ -5,6 +5,7 @@ const cron = require('node-cron');
 const customerRoutes = require('./routes/customerRoutes');
 const errorHandler = require('./utils/errorHandler');
 const path = require('path');
+const fs = require('fs'); // Add this to work with the certificate files
 const prisma = require('./config/database');
 require('dotenv').config();
 
@@ -40,8 +41,19 @@ cron.schedule('* * * * *', () => {
   checkDownlinkStatuses(); // Call the function to check downlink statuses
 });
 
+
+const options = {
+  key: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/fullchain.pem')
+};
+
+
+// Start the HTTPS server and check the database connection
+const server = require('https').createServer(options, app);
+
+
 // Start the server and check the database connection
-app.listen(process.env.PORT, async () => {
+server.listen(process.env.PORT, async () => {
   await checkDatabaseConnection();
   console.log(`Server is running on port ${process.env.PORT}`);
 });

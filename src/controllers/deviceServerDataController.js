@@ -44,28 +44,29 @@ const getRecentDevices = async (req, res) => {
 // };
 const getDeviceById = async (req, res) => {
   try {
-    console.log("Controller - Device ID param:", req.params.id); // Log the ID parameter in the controller
+    const pageSize = parseInt(req.query.pageSize) || 10; // Default pageSize to 10 if not provided
+    const currentPage = parseInt(req.query.pageNo) || 1; // Default pageNo to 1 if not provided
+    const date = req.query.date || "today";
+    // Call the service with dynamic pagination values
+    const device = await deviceService.getDeviceById(req.params.id, currentPage, pageSize, date);
 
-    const device = await deviceService.getDeviceById(req.params.id);
     if (device) {
-      console.log('Device fetched successfully:', device); // Log successful fetch
       res.status(200).json(device);
     } else {
-      console.warn('Device not found'); // Log if device not found
-      res.status(404).json({ message: 'data not found' });
+      res.status(404).json({ message: 'Data not found' });
     }
   } catch (error) {
-    console.error('Error fetching device:', error); // Log error
     res.status(500).json({ message: 'Error fetching device', error });
   }
 };
-
 
 const createDevice = async (req, res) => {
   try {
     // console.log('Creating a new device with data:', req.body); // Log the data being used to create the device
     
     const newDevice = await deviceService.createDevice(req.body);
+
+    if(newDevice === null) return res.status(500).json({ message : "invalid pdu in decoder"});
     // console.log('Device created successfully:', newDevice); // Log successful creation
     res.status(201).json(newDevice);
   } catch (error) {

@@ -159,7 +159,30 @@ const createAlert = async (alertData) => {
     }
 };
 
+const updateAlert = async({data,alertId})=>{
+
+    try {
+        const alertUpdate = await prisma.alerts.update({
+            where: {
+                id: Number(alertId)
+            },
+            data:{
+                name: data.alertName,
+                deviceId: data.deviceId,
+                operator: data.operator,
+                value: Number(data.value),
+                bitwiseOperator: data.bitwiseOperator,
+                readingBeforeAlerts: Number(data.readingBeforeAlerts),
+            }
+        });
+
+        return alertUpdate;
+    } catch (error) {
+        throw new Error('Failed to update alert: ' + error.message);
+    }
+}
 
 
-module.exports = { getAllAlerts, getAllAlertsByProjectId, createAlert };
+module.exports = { getAllAlerts, getAllAlertsByProjectId, createAlert,updateAlert};
+
 

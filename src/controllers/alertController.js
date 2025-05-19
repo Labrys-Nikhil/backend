@@ -12,11 +12,11 @@ const getAllAlerts = async (req, res) => {
 
 const createAlert = async (req, res) => {
     try {
-        const { deviceId, operator, value, bitwiseOperator, readingBeforeAlerts,name } = req.body;
+        const { deviceId, operator, value, bitwiseOperator, readingBeforeAlerts,alertName } = req.body;
 
         // Create the alert with the provided data
         const alertData = {
-            name,
+            name:alertName,
             deviceId,
             operator,
             value,
@@ -43,4 +43,16 @@ const getAllAlertsByProjectId = async (req, res) => {
     }
 }
 
-module.exports = { getAllAlerts, getAllAlertsByProjectId,createAlert };
+const updateAlertById = async (req,res)=>{
+    try {
+        const {  operator, value, bitwiseOperator, readingBeforeAlerts, alertName } = req.body;
+        const{alertId} = req.params;
+        
+        const alerts = await alertsService.updateAlert({ data:req.body, alertId:alertId });
+        return res.status(200).json({ data: alerts }); // Wrap in a data object
+    }catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+module.exports = { getAllAlerts, getAllAlertsByProjectId,createAlert,updateAlertById };
+

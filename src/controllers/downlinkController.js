@@ -366,7 +366,7 @@ const postDownlinkDevice = async (req, res) => {
                 }
             });
             console.log("Saved Downlink Device:", savedDownlink);
-            const autoDownlinkWithdelay = await prisma.autoDownlinkWithDelay.create({
+            const autoDownlinkWithdelay = await prisma.autodownlinkwithdelay.create({
                 data: payloadDataForAutoDownlink
             });
             console.log("Saved autoDownlinkWithDelay:", autoDownlinkWithdelay);
@@ -455,7 +455,7 @@ const getDownlinkDatabyDeviceId = async (req, res) => {
 
 const getDownlinkData = async (req, res) => {
     try {
-        const getDownlink = await prisma.downlinkDevice.findMany();
+        const getDownlink = await prisma.downlinkdevice.findMany();
         if (!getDownlink) {
             return res.status(404).json({ status: false, message: 'No downlink data found' });
         }
@@ -504,7 +504,7 @@ const getDownlinkByDeviceId = async (req, res) => {
         const currentPage = parseInt(req.query.pageNo, 10) || 1;  // Default pageNo to 1 if not provided
 
         // Count the total number of downlinks for the provided device EUI
-        const total = await prisma.downlinkDevice.count({
+        const total = await prisma.downlinkdevice.count({
             where: {
                 devEui: id
             }
@@ -516,7 +516,7 @@ const getDownlinkByDeviceId = async (req, res) => {
         const take = pageSize;
 
         // Fetch paginated downlink data
-        const downlinkData = await prisma.downlinkDevice.findMany({
+        const downlinkData = await prisma.downlinkdevice.findMany({
             where: {
                 devEui: id,
             },

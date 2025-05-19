@@ -1,14 +1,15 @@
+
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const logger = require('../utils/logger'); // Assuming you have a logger setup
 
 const createHardwareOutputs = async (data) => {
     try {
-        const { hardwareId, outputs } = data;
+        const { hardwareId, outputs } = data; 
         
         const createdOutputs = await Promise.all(
             outputs.map(async (output) => {
-                return await prisma.hardwareOutput.create({
+                return await prisma.hardwareoutput.create({
                     data: {
                         hardwareId: hardwareId,
                         outputId: output.outputId,
@@ -27,7 +28,7 @@ const createHardwareOutputs = async (data) => {
 
 const getAllHardwareOutputs = async () => {
     try {
-        const hardwareOutputs = await prisma.hardwareOutput.findMany({
+        const hardwareOutputs = await prisma.hardwareoutput.findMany({
             include: {
                 hardware: true,
                 output: true,
@@ -74,51 +75,34 @@ const getAllHardwareOutputs = async () => {
     }
 };
 
-const getHardwareOutputById = async (id) => {
-    try {
-        const hardwareOutputs = await prisma.hardwareOutput.findMany({
-            where: { hardwareId: parseInt(id) },
-            include: {
-                hardware: true,
-                output: true,
-            },
-        });
 
-        if (!hardwareOutputs || hardwareOutputs.length === 0) {
-            return null;
+   const getHardwareOutputByhardwareId =  async (hardwareId) =>{
+        try {
+            return await prisma.hardwareoutput.findMany({
+                where: { hardwareId }
+            });
+        } catch (error) {
+            console.error("Error fetching hardware output:", error);
+            throw new Error("Failed to fetch hardware outputs.");
         }
-
-        // Structuring the response
-        const structuredResponse = {
-            hardwareId: hardwareOutputs[0].hardwareId,
-            hardware: {
-                name: hardwareOutputs[0].hardware.name,
-                type: hardwareOutputs[0].hardware.type,
-                description: hardwareOutputs[0].hardware.description,
-                modelNo: hardwareOutputs[0].hardware.modelNo,
-                gpsSupported: hardwareOutputs[0].hardware.gpsSupported,
-                configured: hardwareOutputs[0].hardware.configured,
-                createdAt: hardwareOutputs[0].hardware.createdAt,
-            },
-            outputs: hardwareOutputs.map((hwOutput) => ({
-                id: hwOutput.output.id,
-                name: hwOutput.output.name,
-                code: hwOutput.output.code,
-                createdAt: hwOutput.output.createdAt,
-            })),
-        };
-
-        return structuredResponse;
-    } catch (error) {
-        logger.error(`Failed to retrieve hardwareOutput by ID: ${error.message}`, { error });
-        throw new Error("Error retrieving hardwareOutput");
     }
-};
+const getHardwareOutputById = async (id) => {
+        try {
+            const output = await prisma.hardwareoutput.findMany({
+                where: { id: {in:id} }, 
+            });
+    
+            return output;
+        } catch (error) {
+            console.error("Error fetching hardwareOutput by ID:", error);
+            throw new Error("Database query failed"); 
+        }
+    };
 
 
 const updateHardwareOutput = async (id, data) => {
     try {
-        return await prisma.hardwareOutput.update({
+        return await prisma.hardwareoutput.update({
             where: { id: parseInt(id) },
             data,
         });
@@ -130,7 +114,7 @@ const updateHardwareOutput = async (id, data) => {
 
 const deleteHardwareOutput = async (id) => {
     try {
-        return await prisma.hardwareOutput.delete({
+        return await prisma.hardwareoutput.delete({
             where: { id: parseInt(id) },
         });
     } catch (error) {
@@ -142,7 +126,9 @@ const deleteHardwareOutput = async (id) => {
 module.exports = {
     createHardwareOutputs,
     getAllHardwareOutputs,
+    getHardwareOutputByhardwareId,
     getHardwareOutputById,
     updateHardwareOutput,
     deleteHardwareOutput,
 };
+

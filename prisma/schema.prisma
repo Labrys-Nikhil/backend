@@ -15,11 +15,11 @@ model alerts {
   value               Int
   bitwiseOperator     String
   readingBeforeAlerts Int
-  device              device         @relation(fields: [deviceId], references: [id], map: "Alerts_deviceId_fkey")
+  device              device         @relation(fields: [deviceId], references: [id])
   autodownlink        autodownlink?
   notification        notification[]
 
-  @@index([deviceId], map: "Alerts_deviceId_idx")
+  @@index([deviceId])
 }
 
 model autodownlink {
@@ -33,26 +33,28 @@ model autodownlink {
   devEui             String
   pdu                String
   createdAt          DateTime @default(now())
-  alerts             alerts   @relation(fields: [alertId], references: [id], map: "AutoDownlink_alertId_fkey")
+  alerts             alerts   @relation(fields: [alertId], references: [id])
 
-  @@index([alertId], map: "AutoDownlink_alertId_idx")
+  @@index([alertId])
 }
 
 model customer {
-  id                   Int            @id @default(autoincrement())
-  firstName            String         @db.VarChar(50)
-  lastName             String         @db.VarChar(50)
-  image                String?        @db.VarChar(255)
-  companyName          String?        @db.VarChar(100)
-  password             String         @db.VarChar(255)
-  countryCode          String         @db.VarChar(10)
-  phoneNumber          String         @db.VarChar(20)
-  email                String         @unique(map: "Customer_email_key") @db.VarChar(100)
-  role                 String         @default("customer")
-  createdAt            DateTime       @default(now())
-  isDeleted            Boolean        @default(false)
-  isVerified           Boolean        @default(false)
-  isOrgnizationCreated Boolean        @default(false)
+  id                   Int              @id @default(autoincrement())
+  firstName            String           @db.VarChar(50)
+  lastName             String           @db.VarChar(50)
+  image                String?          @db.VarChar(255)
+  companyName          String?          @db.VarChar(100)
+  password             String           @db.VarChar(255)
+  countryCode          String           @db.VarChar(10)
+  phoneNumber          String           @db.VarChar(20)
+  email                String           @unique(map: "Customer_email_key") @db.VarChar(100)
+  createdAt            DateTime         @default(now())
+  isDeleted            Boolean          @default(false)
+  isVerified           Boolean          @default(false)
+  isOrgnizationCreated Boolean          @default(false)
+  Subscription         Subscription[]
+  permissions          UserPermission[]
+  networkdata          networkdata[]
   organization         organization[]
   projects             projects[]
 }
@@ -62,9 +64,9 @@ model deviceattribute {
   name     String
   value    String
   deviceId Int
-  device   device @relation(fields: [deviceId], references: [id], map: "DeviceAttribute_deviceId_fkey")
+  device   device @relation(fields: [deviceId], references: [id])
 
-  @@index([deviceId], map: "DeviceAttribute_deviceId_fkey")
+  @@index([deviceId])
 }
 
 model devicedecodedata {
@@ -80,30 +82,35 @@ model devicedecodedata {
 model deviceserverdata {
   id          Int      @id @default(autoincrement())
   devEui      String
-  ack         Boolean
-  appEui      String
-  channel     Int
-  datarate    Int
-  devClass    String
-  devProfile  String
-  devType     String
-  dup         Boolean
-  estLat      Float
-  estLng      Float
-  freq        Float
-  gwEui       String
-  gwRxTime    DateTime
-  ismBand     String
-  joinId      Int
-  maxPayload  Int
-  pdu         String
-  port        Int
-  rssi        Int
   seqno       Int
-  snr         Float
+  port        Int
+  ack         Boolean
+  pdu         String
   txtime      DateTime
-  deviceId    Int?
+  serverName  String   @default("null")
+  joinId      Int?
+  gwEui       String?
+  rssi        Int?
+  snr         Float?
+  freq        Float?
+  channel     Int?
+  datarate    Int?
+  dup         Boolean?
+  estLat      Float?
+  estLng      Float?
+  cfgLat      Float?
+  cfgLng      Float?
+  devClass    String?
+  devType     String?
+  devProfile  String?
+  metadata    String?
+  ackDnMsgId  Int?
+  ackDnSeqNo  Int?
+  bat         Int?
+  fcnt        Int?
+  offline     Boolean?
   decodedData Json?
+  deviceId    Int?
 }
 
 model downlinkdevice {
@@ -113,14 +120,14 @@ model downlinkdevice {
   classType          String
   pdu                String
   confirmed          Boolean  @default(false)
-  timeoutMinutes     Int      @default(5)
+  timeoutMinutes     Int
   port               String
   payload            String
   deviceId           Int?
-  device             device?  @relation(fields: [deviceId], references: [id], map: "DownlinkDevice_deviceId_fkey")
   createdAt          DateTime @default(now())
+  device             device?  @relation(fields: [deviceId], references: [id])
 
-  @@index([deviceId], map: "DownlinkDevice_deviceId_fkey")
+  @@index([deviceId])
 }
 
 model hardware {
@@ -137,9 +144,12 @@ model hardware {
   gpsSupported       Boolean              @default(true)
   configured         Boolean
   createdAt          DateTime             @default(now())
+  decoderName        String
+  HardwareController HardwareController[]
   device             device[]
   hardwareattributes hardwareattributes[]
   hardwareoutput     hardwareoutput[]
+  manufacturer       manufacturer         @relation(fields: [manufacturerId], references: [id])
 }
 
 model hardwareattributes {
@@ -147,21 +157,21 @@ model hardwareattributes {
   key        String
   value      String
   hardwareId Int
-  hardware   hardware @relation(fields: [hardwareId], references: [id], map: "HardwareAttributes_hardwareId_fkey")
+  hardware   hardware @relation(fields: [hardwareId], references: [id])
 
-  @@index([hardwareId], map: "HardwareAttributes_hardwareId_fkey")
+  @@index([hardwareId])
 }
 
 model hardwareoutput {
   id         Int      @id @default(autoincrement())
   hardwareId Int
-  outputId   Int
   createdAt  DateTime @default(now())
-  hardware   hardware @relation(fields: [hardwareId], references: [id], map: "HardwareOutput_hardwareId_fkey")
-  output     output   @relation(fields: [outputId], references: [id], map: "HardwareOutput_outputId_fkey")
+  name       String
+  type       String
+  unit       String
+  hardware   hardware @relation(fields: [hardwareId], references: [id])
 
-  @@index([hardwareId], map: "HardwareOutput_hardwareId_fkey")
-  @@index([outputId], map: "HardwareOutput_outputId_fkey")
+  @@index([hardwareId])
 }
 
 model notification {
@@ -170,47 +180,63 @@ model notification {
   deviceId  Int
   alertId   Int?
   createdAt DateTime @default(now())
-  alerts    alerts?  @relation(fields: [alertId], references: [id], map: "Notification_alertId_fkey")
-  device    device   @relation(fields: [deviceId], references: [id], map: "Notification_deviceId_fkey")
+  alerts    alerts?  @relation(fields: [alertId], references: [id])
+  device    device   @relation(fields: [deviceId], references: [id])
 
-  @@index([alertId], map: "Notification_alertId_fkey")
-  @@index([deviceId], map: "Notification_deviceId_idx")
+  @@index([alertId])
+  @@index([deviceId])
 }
 
 model organization {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(100)
-  description String   @db.VarChar(255)
-  createdAt   DateTime @default(now())
-  customerId  Int
-  device      device[]
-  customer    customer @relation(fields: [customerId], references: [id], map: "Organization_customerId_fkey")
+  id           Int            @id @default(autoincrement())
+  name         String         @db.VarChar(100)
+  description  String         @db.VarChar(255)
+  createdAt    DateTime       @default(now())
+  customerId   Int
+  License      License[]
+  Subscription Subscription[]
+  device       device[]
+  networkdata  networkdata[]
+  customer     customer       @relation(fields: [customerId], references: [id])
+  projects     projects[]
 
-  @@index([customerId], map: "Organization_customerId_idx")
+  @@index([customerId])
 }
 
 model output {
-  id             Int              @id @default(autoincrement())
-  name           String
-  code           String           @default("function(packet, deviceAttributes, nonLoRaWANDeviceConfig) { return; }")
-  createdAt      DateTime         @default(now())
-  hardwareoutput hardwareoutput[]
+  id          Int    @id @default(autoincrement())
+  deviceId    Int
+  name        String
+  unit        String
+  type        String
+  description String
+  linkedTo    String
+  device      device @relation(fields: [deviceId], references: [id])
+
+  @@index([deviceId])
 }
 
 model projects {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(100)
-  solutions  String   @db.VarChar(255)
-  area       String   @db.VarChar(100)
-  setLimit   Int
-  createdAt  DateTime @default(now())
-  customerId Int
-  estLat     Float
-  estLng     Float
-  device     device[]
-  customer   customer @relation(fields: [customerId], references: [id], map: "Projects_customerId_fkey")
+  id             Int          @id @default(autoincrement())
+  name           String       @db.VarChar(100)
+  solutions      String       @db.VarChar(255)
+  area           String       @db.VarChar(100)
+  setLimit       Int
+  createdAt      DateTime     @default(now())
+  customerId     Int
+  estLat         Float
+  estLng         Float
+  enabled        Boolean?     @default(true)
+  organizationId Int          @default(0)
+  addWidget      addwidget[]
+  card           card[]
+  device         device[]
+  customer       customer     @relation(fields: [customerId], references: [id])
+  organization   organization @relation(fields: [organizationId], references: [id])
+  addreport      addreport[]  @relation("ReportsToProjects")
 
-  @@index([customerId], map: "Projects_customerId_idx")
+  @@index([customerId])
+  @@index([organizationId])
 }
 
 model timezone {
@@ -220,49 +246,37 @@ model timezone {
 }
 
 model device {
-  id                   Int    @id @default(autoincrement())
-  name                 String
-  manufacture          String
-  deviceLocation       String
-  currentLocation      String
-  hardwareId           Int
-  networkId            Int
-  organizationId       Int
-  projectId            Int
-  hardwareOutputId     Int?
-  deviceId             String @unique
-  location             String
-  hardwareType         String @default("LoraWan")
-  network              String @default("SENRA")
-  deviceHardwaretypeId Int // Link to deviceHardwareType
+  id                 Int               @id @default(autoincrement())
+  name               String
+  manufacture        String
+  mainOutput         Json
+  currentLocation    String
+  hardwareId         Int
+  networkId          Int
+  organizationId     Int
+  projectId          Int
+  hardwareOutputId   Int?
+  deviceId           String            @unique
+  location           String
+  hardwareType       String            @default("LoraWan")
+  network            String            @default("SENRA")
+  deviceLocationName String            @db.VarChar(255)
+  alerts             alerts[]
+  card               card[]
+  hardware           hardware          @relation(fields: [hardwareId], references: [id])
+  organization       organization      @relation(fields: [organizationId], references: [id])
+  projects           projects          @relation(fields: [projectId], references: [id])
+  deviceattribute    deviceattribute[]
+  downlinkdevice     downlinkdevice[]
+  notification       notification[]
+  output             output[]
 
-  alerts          alerts[]
-  hardware        hardware          @relation(fields: [hardwareId], references: [id], map: "Device_hardwareId_fkey")
-  organization    organization      @relation(fields: [organizationId], references: [id], map: "Device_organizationId_fkey")
-  projects        projects          @relation(fields: [projectId], references: [id], map: "Device_projectId_fkey")
-  deviceattribute deviceattribute[]
-  downlinkdevice  downlinkdevice[]
-  notification    notification[]
-
-  // Corrected relation to deviceHardwareType as a single field reference
-  deviceHardwareType deviceHardwareType @relation(fields: [deviceHardwaretypeId], references: [id], map: "Device_deviceHardwareTypeId_fkey")
-
-  @@index([hardwareId], map: "Device_hardwareId_fkey")
-  @@index([organizationId], map: "Device_organizationId_idx")
-  @@index([projectId], map: "Device_projectId_idx")
+  @@index([hardwareId])
+  @@index([organizationId])
+  @@index([projectId])
 }
 
-model deviceHardwareType {
-  id             Int      @id @default(autoincrement())
-  manufacturerId Int
-  manufacturer   String   @db.VarChar(100)
-  output         String?  @db.VarChar(255) // Only for controllers
-  devices        device[] // Relation back to device
-
-  // Additional fields or constraints can be added as necessary
-}
-
-model AutoDownlinkWithDelay {
+model autodownlinkwithdelay {
   id                 Int      @id @default(autoincrement())
   downlinkController String
   isActive           Boolean
@@ -272,7 +286,263 @@ model AutoDownlinkWithDelay {
   deviceId           Int
   devEui             String
   pdu                String
-  isProcessing       Boolean  @default(false) // Default value
+  isProcessing       Boolean  @default(false)
   createdAt          DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt          DateTime @updatedAt
+}
+
+model addwidget {
+  id            Int      @id @default(autoincrement())
+  pageName      String
+  stepOneData   Json
+  stepTwoData   Json
+  stepThreeData Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  projectId     Int
+  projects      projects @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+}
+
+model pages {
+  id              Int      @id @default(autoincrement())
+  pageName        String
+  projectId       Int
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  refershInterval Int      @default(1)
+}
+
+model tokenblacklist {
+  id        Int      @id @default(autoincrement())
+  token     String   @db.Text
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model label {
+  id                Int               @id @default(autoincrement())
+  name              String
+  description       String?
+  color             String
+  projectId         Int
+  deviceId          Int
+  outputId          Int
+  outputName        String
+  conditionValue    Int
+  conditionOperator conditionoperator
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+}
+
+model loriotuplinkmessage {
+  id        Int      @id @default(autoincrement())
+  cmd       String
+  seqno     Int
+  EUI       String
+  ts        BigInt
+  ack       Boolean
+  bat       Float
+  fcnt      BigInt
+  port      Int
+  offline   Boolean
+  encdata   String?
+  data      String?
+  decoded   Json?
+  createdAt DateTime @default(now())
+}
+
+model networkmodel {
+  id             Int           @id @default(autoincrement())
+  name           String        @db.VarChar(100)
+  urlString      String?
+  createdAt      DateTime      @default(now())
+  method         String?
+  server         String?       @db.VarChar(255)
+  updatedAt      DateTime      @default(now()) @updatedAt
+  networkdata    networkdata[]
+}
+
+model networkdata {
+  id             Int          @id @default(autoincrement())
+  networkId      Int
+  hostname       String?
+  token          String?
+  customerId     Int
+  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime     @default(now())
+  appid          String?
+  organizationId Int          @default(0)
+  urlString      String?
+  customer       customer     @relation(fields: [customerId], references: [id])
+  network        networkmodel @relation(fields: [networkId], references: [id])
+  organization   organization @relation(fields: [organizationId], references: [id])
+
+  @@index([customerId])
+  @@index([networkId])
+  @@index([organizationId])
+}
+
+model addreport {
+  id          Int        @id @default(autoincrement())
+  reportName  String
+  description String
+  duration    String
+  hardwareId  Json
+  deviceId    Json
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  projectId   Json
+  projects    projects[] @relation("ReportsToProjects")
+}
+
+model card {
+  id                      Int      @id @default(autoincrement())
+  title                   String
+  deviceId                Int
+  projectId               Int
+  devEUI                  String
+  pageName                String
+  output                  String
+  displayFormula          String?
+  displayUnit             String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  displayFormulaSecondary String?
+  displayUnitSecondary    String?
+  device                  device   @relation(fields: [deviceId], references: [id])
+  projects                projects @relation(fields: [projectId], references: [id])
+
+  @@index([deviceId])
+  @@index([projectId])
+}
+
+model HardwareController {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  urlString  String?
+  hardwareId Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  hardware   hardware @relation(fields: [hardwareId], references: [id])
+
+  @@index([hardwareId])
+}
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+}
+
+model Module {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  subModules SubModule[]
+}
+
+model SubModule {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique
+  moduleId    Int
+  module      Module           @relation(fields: [moduleId], references: [id])
+  permissions UserPermission[]
+
+  @@index([moduleId])
+}
+
+model UserPermission {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  subModuleId Int
+  canCreate   Boolean   @default(false)
+  canRead     Boolean   @default(true)
+  canUpdate   Boolean   @default(false)
+  canDelete   Boolean   @default(false)
+  subModule   SubModule @relation(fields: [subModuleId], references: [id])
+  user        customer  @relation(fields: [userId], references: [id])
+
+  @@index([subModuleId])
+  @@index([userId])
+}
+
+model License {
+  id             String        @id @default(uuid())
+  organizationId Int
+  licenseKey     String        @unique @db.VarChar(512)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  expiresAt      DateTime
+  isActive       Boolean       @default(false)
+  isExpired      Boolean       @default(false)
+  subscriptionId String?
+  currentUsers   Int           @default(0)
+  currentDevices Int           @default(0)
+  organization   organization  @relation(fields: [organizationId], references: [id])
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  payment        PaymentData[]
+
+  @@index([organizationId])
+  @@index([subscriptionId])
+}
+
+model Subscription {
+  id             String       @id @default(uuid())
+  organizationId Int
+  planId         Int
+  startDate      DateTime     @default(now())
+  endDate        DateTime?
+  isTrial        Boolean      @default(true)
+  customerId     Int?
+  License        License[]
+  PaymentData    PaymentData?
+  customer       customer?    @relation(fields: [customerId], references: [id])
+  organization   organization @relation(fields: [organizationId], references: [id])
+  plan           Plan         @relation(fields: [planId], references: [id])
+
+  @@index([customerId])
+  @@index([organizationId])
+  @@index([planId])
+}
+
+model Plan {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  deviceLimit   Int
+  userLimit     Int
+  analytics     Boolean?
+  emailSupport  Boolean?
+  notifications Boolean?
+  price         Float
+  Subscription  Subscription[]
+}
+
+model PaymentData {
+  id             String       @id @default(uuid())
+  subscriptionId String       @unique
+  amount         Float
+  currency       String       @default("Rupees")
+  method         String
+  status         String
+  transactionId  String
+  createdAt      DateTime     @default(now())
+  licenseId      String?
+  License        License?     @relation(fields: [licenseId], references: [id])
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([licenseId])
+}
+
+model manufacturer {
+  id       Int        @id @default(autoincrement())
+  name     String     @unique @db.VarChar(100)
+  hardware hardware[]
+}
+
+enum conditionoperator {
+  EQ
+  GTE
+  LTE
+  GT
+  LT
 }

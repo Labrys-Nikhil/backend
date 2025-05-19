@@ -8,7 +8,6 @@ const fetchDecodedData = async (devEui) => {
     where: { devEui: devEui }, // Filter by devEui
     orderBy: { timestamp: 'desc' }, // Optional: order by timestamp
   });
-
   // Group data by timestamp
   const groupedData = decodedData.reduce((acc, item) => {
     const timestampKey = item.timestamp; // Use timestamp as the key
@@ -67,8 +66,49 @@ const fetchRecentDecodedData = async (devEui) => {
   return singleTimestampData; // Return the single object with the most recent timestamp and its attributes
 };
 
+const fetchRecentDecodedDataByDEVEUI = async (devEui) => {
+  console.log("fetchrecent function ",devEui);
 
+  const decodedData = await prisma.devicedecodedata.groupBy({
+    by: ['devEui'],
+    where: {
+      devEui: {
+        in: devEui?.split(','),
+      },
+    },
+    _max: {
+      timestamp: true, // Get the most recent timestamp for each group
+    },
+  });
+  
+  // Step 2: Fetch all records for each devEui with the most recent timestamp
+  const results = [];
+  
+  for (const group of decodedData) {
+    const mostRecentTimestamp = group._max.timestamp;
+  
+    // Fetch all records with the most recent timestamp for the current devEui
+    const records = await prisma.devicedecodedata.findMany({
+      where: {
+        devEui: group.devEui,
+        timestamp: mostRecentTimestamp, // Filter by the most recent timestamp
+      },
+    });
+  
+    // Push the records in the desired format
+    results.push({
+      devEui: group.devEui,
+      timestamp: records,
+    });
+  }
+  
+
+  return results;
+
+  
+};
 module.exports = {
   fetchDecodedData,
-  fetchRecentDecodedData
+  fetchRecentDecodedData,
+	fetchRecentDecodedDataByDEVEUI
 };

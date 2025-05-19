@@ -63,11 +63,31 @@ const deleteManufacture = async (req, res) => {
         res.status(500).json({ success: false, message: 'Error deleting manufacture', error: error.message });
     }
 };
-
+const getManufactureName = async (req, res) => {
+    try {
+      // Get manufacturerId from URL parameter
+      const { manufacturerId } = req.params;
+  
+      // Ensure manufacturerId is present and is a valid number
+      if (!manufacturerId || isNaN(manufacturerId)) {
+        return res.status(400).json({ message: 'Valid manufacturerId is required' });
+      }
+  
+      // Call service function to get manufacturer name
+      const result = await manufactureService.getManufacturerNameById(manufacturerId);
+  
+      // Return result from service
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+  
 module.exports = {
     createManufacture,
     getAllManufactures,
     getManufactureById,
     updateManufacture,
     deleteManufacture,
+    getManufactureName
 };
