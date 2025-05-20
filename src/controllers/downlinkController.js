@@ -1,7 +1,8 @@
 const axios = require('axios');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { calculatePagination, filterTransactionsByDate } = require('../helper/commonHelper')
+const { calculatePagination, filterTransactionsByDate } = require('../helper/commonHelper');
+const { controllerPDUByModel } = require('../helper/controllerPDUbyModel');
 
 // Main controller function for handling downlink device
 // const postDownlinkDevice = async (req, res) => {
@@ -236,9 +237,9 @@ const { calculatePagination, filterTransactionsByDate } = require('../helper/com
 //             `https://portal.senraco.io/rest/current/device/sendmsg?${params.toString()}`,
 //             {}, // Sending an empty body in this case
 //             {
-                // headers: {
-                //     'authorization': 'AK3:UARIci2iL6EeCbhbupMqFaevRxt59CnqGqFFRRwCx'
-                // }
+// headers: {
+//     'authorization': 'AK3:UARIci2iL6EeCbhbupMqFaevRxt59CnqGqFFRRwCx'
+// }
 //             }
 //         );
 
@@ -282,26 +283,16 @@ const postDownlinkDevice = async (req, res) => {
             deviceId
         });
 
-        let packet;
-        let relay1State = 'off';
-        let relay2State = 'off';
+        //first get the hardware through devEUI and modelNumber.
+        
+        //then call the decodePDU for that hardware
 
-        if (downlinkController === "relay 1") {
-            packet = generateRelay1Packet(pdu);
-            relay1State = pdu === 'on' ? 'on' : 'off';
-        } else if (downlinkController === "relay 2") {
-            packet = generateRelay2Packet(pdu);
-            relay2State = pdu === 'on' ? 'on' : 'off';
-        } else if (downlinkController === "relay 1+2") {
-            packet = generateBothRelayPacket(pdu);
-            relay1State = pdu === 'on' ? 'on' : 'off';
-            relay2State = pdu === 'on' ? 'on' : 'off';
-        } else {
-            console.log("Invalid downlinkController:", downlinkController);
-            return res.status(400).json({ message: "Invalid downlink controller" });
+        //last step to call the mapping;
+        const controllerPDUData = {
+            downlinkController: downlinkController,
+            pdu: pdu
         }
-
-        console.log("Generated packet:", packet);
+        const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
 
         const device = await prisma.device.findFirst({
             where: { id: deviceId },
@@ -356,10 +347,10 @@ const postDownlinkDevice = async (req, res) => {
         if (response.status === 200) {
             const savedDownlink = await prisma.downlinkdevice.create({
                 data: {
-                    downlinkController:data.downlinkController,
-                    classType:data.classType,
-                    devEui:data.devEui,
-                    pdu:data.pdu,
+                    downlinkController: data.downlinkController,
+                    classType: data.classType,
+                    devEui: data.devEui,
+                    pdu: data.pdu,
                     port: packet["Port"],
                     payload: packet["Payload"],
                     deviceId: data.deviceId

@@ -10,12 +10,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^6.8.2",
     "@types/nodemailer": "^6.4.17",
     "i": "^0.3.7",
     "nodemon": "^3.1.7",
-    "npm": "^10.9.1",
-    "prisma": "^6.5.0"
+    "npm": "^10.9.2",
+    "prisma": "^6.8.2"
   },
   "dependencies": {
     "axios": "^1.7.7",

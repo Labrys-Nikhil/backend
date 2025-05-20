@@ -42,18 +42,18 @@ cron.schedule('* * * * *', () => {
 });
 
 
-const options = {
-  key: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/privkey.pem'),
-  cert: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/fullchain.pem')
-};
+// const options = {
+//   key: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/privkey.pem'),
+//   cert: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/fullchain.pem')
+// };
 
 
 // Start the HTTPS server and check the database connection
-const server = require('https').createServer(options, app);
+//const server = require('https').createServer(options, app);
 
 
 // Start the server and check the database connection
-server.listen(process.env.PORT, async () => {
+app.listen(process.env.PORT, async () => {
   await checkDatabaseConnection();
   console.log(`Server is running on port ${process.env.PORT}`);
 });
