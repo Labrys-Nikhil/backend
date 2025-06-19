@@ -5,72 +5,72 @@
 
 //const downlinkLoriotForAuto = async (req, res) => {
 
-    // user token is being send to get the customer and network info through the customer id 
+// user token is being send to get the customer and network info through the customer id 
 //    const  deviceEui  = req.devEui
 //    console.log("device EUI received", deviceEui);
-    // //req.user we can use
-    // console.log("req->>>>>", req.headers);
-    // const { authorization } = req.headers; // JWT token in Authorization header
-    // console.log("Authorization header:", authorization);
+// //req.user we can use
+// console.log("req->>>>>", req.headers);
+// const { authorization } = req.headers; // JWT token in Authorization header
+// console.log("Authorization header:", authorization);
 
 //    const { EUI, port, confirmed, priority, data, appid } = req.body;
 //    console.log("Request body:", { EUI, port, confirmed, priority, data, appid });
 
-    // if (!authorization) {
-    //     console.error("Authorization header is missing");
-    //     return res.status(401).json({ error: 'Authorization header is missing' });
-    // }
+// if (!authorization) {
+//     console.error("Authorization header is missing");
+//     return res.status(401).json({ error: 'Authorization header is missing' });
+// }
 
 //    try {
-        // Decode and validate JWT token
-        // const token = authorization.replace('Bearer ', '');
-        // console.log("Decoded JWT token:", token);
+// Decode and validate JWT token
+// const token = authorization.replace('Bearer ', '');
+// console.log("Decoded JWT token:", token);
 
-        // const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        // console.log("Decoded JWT payload:", decoded);
+// const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+// console.log("Decoded JWT payload:", decoded);
 
-        //first find the customer id
+//first find the customer id
 //        const device = await prisma.device.findFirst({
 //            where: {
 //                deviceId: deviceEui, // Replace with actual deviceId
 //            }
- //       });
+//       });
 
 
- //       console.log("device found in loriot downlink:", device);
+//       console.log("device found in loriot downlink:", device);
 
 //        if (!device) {// customer id 
 //            console.error("Invalid : device not found in loriot downlink");
-            // return res.status(400).json({ error: 'Invalid : device not found in loriot downlink' });
+// return res.status(400).json({ error: 'Invalid : device not found in loriot downlink' });
 //            return null;
 //        }
 
-        // Fetch networkmodel details based on customerId
+// Fetch networkmodel details based on customerId
 //        const network = await prisma.networkdata.findFirst({
 //            where: { networkId: device.networkId },
-            // select: { name: true, token: true }, // Fetch servername (name) and Authorization token
+// select: { name: true, token: true }, // Fetch servername (name) and Authorization token
 //        });
- //       console.log("Fetched network details:", network);
+//       console.log("Fetched network details:", network);
 
- //       if (!network) {
- //           console.error("Network not found for this customerId:", customerId);
-            // return res.status(404).json({ error: 'Network not found for this customer' });
- //           return null;
- //       }
+//       if (!network) {
+//           console.error("Network not found for this customerId:", customerId);
+// return res.status(404).json({ error: 'Network not found for this customer' });
+//           return null;
+//       }
 
- //       const servername = network.hostname;
- //       const serverToken = network.token;
- //       console.log("Server name:", servername);
-   //     console.log("Server token:", serverToken);
+//       const servername = network.hostname;
+//       const serverToken = network.token;
+//       console.log("Server name:", servername);
+//     console.log("Server token:", serverToken);
 
- //       const fullServerName = servername + ".loriot.io";
- //       console.log("checking fullservername", fullServerName);
+//       const fullServerName = servername + ".loriot.io";
+//       console.log("checking fullservername", fullServerName);
 
-        // Construct base URL
+// Construct base URL
 //        const baseUrl = `https://${fullServerName}/1/rest`;
 //        console.log("Constructed base URL:", baseUrl);
 
-        // Prepare the downlink payload
+// Prepare the downlink payload
 //        const payload = {
 //            cmd: 'tx',
 //            EUI,
@@ -79,10 +79,10 @@
 //            priority,
 //            data,
 //            appid,
- //       };
- //       console.log("Downlink payload:", payload);
+//       };
+//       console.log("Downlink payload:", payload);
 
-        // Make the POST request to the downlink API
+// Make the POST request to the downlink API
 //        const response = await axios.post(baseUrl, payload, {
 //            headers: {
 //                'Content-Type': 'application/json',
@@ -109,18 +109,18 @@
 //                data: payloadDataForAutoDownlink
 //            });
 //            console.log("Saved autoDownlinkWithDelay:", autoDownlinkWithdelay);
-  //      }
+//      }
 
 
 
-        //store the response into the native paltfrom table
+//store the response into the native paltfrom table
 //        return response;
 //    } catch (error) {
-        // console.error("Error during processing:", error.message);
-        // if (error.name === 'JsonWebTokenError') {
-        //     return res.status(401).json({ error: 'Invalid JWT token' });
-        // }
-        // return res.status(500).json({ error: 'Failed to process request', details: error.message });
+// console.error("Error during processing:", error.message);
+// if (error.name === 'JsonWebTokenError') {
+//     return res.status(401).json({ error: 'Invalid JWT token' });
+// }
+// return res.status(500).json({ error: 'Failed to process request', details: error.message });
 //        return null;
 //    }
 //};
@@ -131,6 +131,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const { controllerPDUByModel } = require('../helper/controllerPDUbyModel');
 
 const downlinkLoriotForAuto = async (req, res) => {
 
@@ -144,8 +145,8 @@ const downlinkLoriotForAuto = async (req, res) => {
     // console.log("Authorization header:", authorization);
 
 
-    const { downlinkController, classType, devEui, pdu, timeoutMinutes, port,deviceId } = req.body;
-    console.log("Request body:", { downlinkController, classType, devEui, pdu, timeoutMinutes, port,deviceId  });
+    const { downlinkController, classType, devEui, pdu, timeoutMinutes, port, deviceId } = req.body;
+    console.log("Request body:", { downlinkController, classType, devEui, pdu, timeoutMinutes, port, deviceId });
 
     const device = req.device;
     console.log("device fetched:", device);
@@ -159,29 +160,39 @@ const downlinkLoriotForAuto = async (req, res) => {
         }
     });
 
-    // Prepare data for downlink for loriot
-    //EUI, port, confirmed, priority, data, appid
-    let packet;
-    let relay1State = 'off';
-    let relay2State = 'off';
+    const deviceData = await prisma.device.findFirst({
+        where: {
+            deviceId: devEui
+        },
+        select: {
+            hardwareId: true
+        }
+    })
 
-    if (downlinkController === "relay 1" || downlinkController === "Relay 1") {
-        packet = generateRelay1Packet(pdu);
-        relay1State = pdu.toLowerCase() === 'on' ? 'on' : 'off';
-    } else if (downlinkController === "relay 2" || downlinkController === "Relay 2") {
-        packet = generateRelay2Packet(pdu);
-        relay2State = pdu.toLowerCase() === 'on' ? 'on' : 'off';
-    } else if (downlinkController === "relay 1+2") {
-        packet = generateBothRelayPacket(pdu);
-        relay1State = pdu === 'on' ? 'on' : 'off';
-        relay2State = pdu === 'on' ? 'on' : 'off';
-    } else {
-        console.log("Invalid downlinkController:", downlinkController);
-        return res.status(400).json({ message: "Invalid downlink controller" });
+    const hardwareData = await prisma.hardware.findFirst({
+        where: {
+            id: deviceData.hardwareId,
+        },
+        select: {
+            id: true,
+            //decoderPDU:true,
+            modelNo: true
+        }
+    });
+    console.log("device and hardware data", deviceData, hardwareData);
+
+    //then call the decodePDU for that hardware
+    const modelNumber = hardwareData.modelNo;
+
+    //last step to call the mapping;
+    const controllerPDUData = {
+        downlinkController: downlinkController,
+        pdu: pdu
     }
+    console.log(controllerPDUData);
+    const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
 
-    console.log("Generated packet:", packet);
-
+    console.log("data after the controllerPDU", responseOfControllerPDU);
 
     // const loriotData = {
     //     EUI: devEui,
@@ -208,31 +219,35 @@ const downlinkLoriotForAuto = async (req, res) => {
 
         //first find the customer id
         const device = await prisma.device.findFirst({
-            where: {
-                deviceId: deviceEui, // Replace with actual deviceId
-            }
+            where: { deviceId: devEui },
         });
+        console.log("device acording to the devEUI in the autodownlink Settimeout", device);
 
-
-        console.log("device found in loriot downlink:", device);
-
-        if (!device) {// customer id 
-            console.error("Invalid : device not found in loriot downlink");
-            // return res.status(400).json({ error: 'Invalid : device not found in loriot downlink' });
-            return null;
+        if (!device) {
+            console.log("Device not found with ID:", devEui);
+            return res.status(404).json({ message: "Device not found" });
         }
-
-        // Fetch networkmodel details based on customerId
+        const organization = await prisma.organization.findFirst({
+            where:{
+                id:device.organizationId,
+            },
+            select:{
+                id:true,
+                customerId:true
+            }
+        })
         const network = await prisma.networkdata.findFirst({
-            where: { networkId: device.networkId },
-            // select: { name: true, token: true }, // Fetch servername (name) and Authorization token
-        });
-        console.log("Fetched network details:", network);
+            where: {
+                organizationId: device.organizationId,
+                networkId: device.networkId,
+                customerId: organization.customerId,
+            }
+        })
+
+        console.log("device acording to the network in the maptheDownlinkTospecificServer", network);
 
         if (!network) {
-            console.error("Network not found for this customerId:", customerId);
-            // return res.status(404).json({ error: 'Network not found for this customer' });
-            return null;
+            return res.status(500).json({ message: "network not found" });
         }
 
         const servername = network.hostname;
@@ -250,12 +265,12 @@ const downlinkLoriotForAuto = async (req, res) => {
         // Prepare the downlink payload
         const payload = {
             cmd: 'tx',
-            EUI:devEui,
-            port:Number(port) || 2,
-            confirmed:true,
-            priority:1,
-            data:packet["Payload"],
-            appid:networkAppid.appid,
+            EUI: devEui,
+            port: Number(responseOfControllerPDU?.Port) || 2,
+            confirmed: true,
+            priority: 1,
+            data: responseOfControllerPDU?.Payload,
+            appid: networkAppid.appid,
         };
         console.log("Downlink payload:", payload);
 
@@ -275,8 +290,8 @@ const downlinkLoriotForAuto = async (req, res) => {
                     classType: classType,
                     devEui: devEui,
                     pdu: pdu,
-                    port: packet["Port"],
-                    payload: packet["Payload"],
+                    port: responseOfControllerPDU?.Port,
+                    payload: responseOfControllerPDU?.Payload,
                     deviceId: deviceId,
                     timeoutMinutes: timeoutMinutes
                 }
@@ -298,50 +313,6 @@ const downlinkLoriotForAuto = async (req, res) => {
         return null;
     }
 };
-
-
-
-// Function to generate packet for Relay 1
-function generateRelay1Packet(value) {
-    const packet = {};
-    if (value.toLowerCase() === 'on') {
-        packet["Payload"] = "030111"; // Relay 1: On
-    } else if (value.toLowerCase() === 'off') {
-        packet["Payload"] = "030011"; // Relay 1: Off
-    } else {
-        packet["Payload"] = "031111"; // Relay 1: No change
-    }
-    packet["Port"] = "2";
-    return packet;
-}
-
-// Function to generate packet for Relay 2
-function generateRelay2Packet(value) {
-    const packet = {};
-    if (value.toLowerCase() === 'on') {
-        packet["Payload"] = "031101"; // Relay 2: On
-    } else if (value.toLowerCase() === 'off') {
-        packet["Payload"] = "031100"; // Relay 2: Off
-    } else {
-        packet["Payload"] = "031111"; // Relay 2: No change
-    }
-    packet["Port"] = "2";
-    return packet;
-}
-
-// Function to generate packet for Relay 1 and Relay 2
-function generateBothRelayPacket(value) {
-    const packet = {};
-    if (value.toLowerCase() === 'on') {
-        packet["Payload"] = "030101"; // Both Relays: On
-    } else if (value.toLowerCase() === 'off') {
-        packet["Payload"] = "030000"; // Both Relays: Off
-    } else {
-        packet["Payload"] = "031111"; // No change
-    }
-    packet["Port"] = "2";
-    return packet;
-}
 
 module.exports = { downlinkLoriotForAuto }
 

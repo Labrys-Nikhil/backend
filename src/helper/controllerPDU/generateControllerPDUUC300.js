@@ -1,11 +1,11 @@
 function generateControllerPDUUC300(controllerName, value) {
     const packet = {};
     const commands = {
-        gpio_1: {
+        Relay_out_1: {
             on: "070100ff",
             off: "070000ff"
         },
-        gpio_2: {
+        Relay_out_2: {
             on: "080100ff",
             off: "080000ff"
         }

@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { postDownlinkDevice } = require('../controllers/downlinkController');
 const { downlinkLoriot } = require("../controllers/loriotcontroller");
-
+const {controllerPDUByModel} = require('../helper/controllerPDUbyModel');
 
 const mapTheDownlinkAndRoutetoSpecificServer = async (req, res) => {
     const {
@@ -62,29 +62,46 @@ const mapTheDownlinkAndRoutetoSpecificServer = async (req, res) => {
         const deviceAppid = network.appid;
 
         //step 3:---- decode the data into the relevant payloadf format
-        let packet;
-        let relay1State = 'off';
-        let relay2State = 'off';
+        
+        //first get the hardware through devEUI and modelNumber.
+        const deviceData = await prisma.device.findFirst({
+            where:{
+                deviceId:devEui
+            },
+            select:{
+                hardwareId:true
+            }
+        })
 
-        if (downlinkController === "relay 1") {
-            packet = generateRelay1Packet(pdu);
-            relay1State = pdu === 'on' ? 'on' : 'off';
-        } else if (downlinkController === "relay 2") {
-            packet = generateRelay2Packet(pdu);
-            relay2State = pdu === 'on' ? 'on' : 'off';
-        } else if (downlinkController === "relay 1+2") {
-            packet = generateBothRelayPacket(pdu);
-            relay1State = pdu === 'on' ? 'on' : 'off';
-            relay2State = pdu === 'on' ? 'on' : 'off';
-        } else {
-            console.log("Invalid downlinkController:", downlinkController);
-            return res.status(400).json({ message: "Invalid downlink controller" });
+        const hardwareData = await prisma.hardware.findFirst({
+            where:{
+                id:deviceData.hardwareId,
+            },
+            select:{
+                id:true,
+                decoderPDU:true,
+                modelNo:true
+            }
+        });
+        console.log("device and hardware data",deviceData,hardwareData);
+
+        //then call the decodePDU for that hardware
+        const modelNumber = hardwareData.modelNo;
+
+        //last step to call the mapping;
+        const controllerPDUData = {
+            downlinkController: downlinkController,
+            pdu: pdu
         }
+        console.log(controllerPDUData);
+        const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
 
+        console.log("data after the controllerPDU",responseOfControllerPDU);
+        //return responseOfControllerPDU;
         const payloadForLoriot = {
             port: data.port,
             confirmed: data.confirmed || true, 
-            data: packet["Payload"],
+            data: responseOfControllerPDU?.Payload,
             EUI: data.devEui,
             appid: deviceAppid,
             priority: 2
@@ -103,8 +120,8 @@ const mapTheDownlinkAndRoutetoSpecificServer = async (req, res) => {
                         classType: classType,
                         devEui: devEui,
                         pdu: pdu,
-                        port: packet["Port"],
-                        payload: packet["Payload"],
+                        port: responseOfControllerPDU?.port,
+                        payload: responseOfControllerPDU?.payload,
                         deviceId: device.id,
                         timeoutMinutes: data.timeoutMinutes
                     }
@@ -118,7 +135,7 @@ const mapTheDownlinkAndRoutetoSpecificServer = async (req, res) => {
                         pdu,
                         isActive: true,
                         timeoutMinutes: Number(timeoutMinutes),
-                        port: Number(packet["Port"]),
+                        port: Number(responseOfControllerPDU?.port),
                         deviceId: Number(Device.id)
                     }
                 });
@@ -134,8 +151,8 @@ const mapTheDownlinkAndRoutetoSpecificServer = async (req, res) => {
                         classType: classType,
                         devEui: devEui,
                         pdu: pdu,
-                        port: packet["Port"],
-                        payload: packet["Payload"],
+                        port: responseOfControllerPDU?.port,
+                        payload: responseOfControllerPDU?.payload,
                         deviceId: device.id,
                         timeoutMinutes: data.timeoutMinutes
                     }
@@ -149,46 +166,6 @@ const mapTheDownlinkAndRoutetoSpecificServer = async (req, res) => {
         return res.status(500).json({ message: "Invalid network ID" });
     }
 }
-// Function to generate packet for Relay 1
-function generateRelay1Packet(value) {
-    const packet = {};
-    if (value.toLowerCase() === 'on') {
-        packet["Payload"] = "030111"; // Relay 1: On
-    } else if (value.toLowerCase() === 'off') {
-        packet["Payload"] = "030011"; // Relay 1: Off
-    } else {
-        packet["Payload"] = "031111"; // Relay 1: No change
-    }
-    packet["Port"] = "2";
-    return packet;
-}
 
-// Function to generate packet for Relay 2
-function generateRelay2Packet(value) {
-    const packet = {};
-    if (value.toLowerCase() === 'on') {
-        packet["Payload"] = "031101"; // Relay 2: On
-    } else if (value.toLowerCase() === 'off') {
-        packet["Payload"] = "031100"; // Relay 2: Off
-    } else {
-        packet["Payload"] = "031111"; // Relay 2: No change
-    }
-    packet["Port"] = "2";
-    return packet;
-}
-
-// Function to generate packet for Relay 1 and Relay 2
-function generateBothRelayPacket(value) {
-    const packet = {};
-    if (value.toLowerCase() === 'on') {
-        packet["Payload"] = "030101"; // Both Relays: On
-    } else if (value.toLowerCase() === 'off') {
-        packet["Payload"] = "030000"; // Both Relays: Off
-    } else {
-        packet["Payload"] = "031111"; // No change
-    }
-    packet["Port"] = "2";
-    return packet;
-}
 
 module.exports = { mapTheDownlinkAndRoutetoSpecificServer };
