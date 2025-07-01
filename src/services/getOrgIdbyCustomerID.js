@@ -1,7 +1,6 @@
 // services/customerService.js
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 
 const getOrganizationIdByCustomerId = async (customerId) => {
   const customer = await prisma.customer.findUnique({

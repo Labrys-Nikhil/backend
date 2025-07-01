@@ -1,46 +1,151 @@
 const deviceService = require('../services/deviceService');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
 
+
+//const createDevice = async (req, res) => {
+//  const {deviceData} = req.body;
+
+//  try {
+//    const customerId = req.user.id;
+    // Check if the deviceId already exists
+//    console.log("checking the frontend data----->",deviceData);
+//    console.log("deviceId",deviceData.deviceId);
+//    const existingDevice = await prisma.device.findUnique({
+//      where: {
+//        deviceId: deviceData.deviceId,
+//      },
+//    });
+//	  const orgId = await prisma.organization.findFirst({
+//      where:{
+//        customerId:customerId
+//      },
+//      select:{
+//        id:true
+//      }
+//    })
+
+
+//    if (existingDevice) {
+//      return res.status(400).json({
+//        success: false,
+//        error: `Device with deviceId '${deviceData.deviceId}' already exists.`,
+//      })
+//    }
+
+    // Check if hardwareId, networkId, organizationId, and projectId exist using Promise.allSettled
+//    const results = await Promise.allSettled([
+//      prisma.hardware.findUnique({ where: { id: deviceData.hardwareId } }),
+//      prisma.networkmodel.findUnique({ where: { id: deviceData.networkId } }),
+//      prisma.organization.findFirst({ where: { customerId:customerId } }),
+//      prisma.projects.findUnique({ where: { id: deviceData.projectId } }),
+//    ]);
+//
+//    // Validate the results of the checks
+//    const [hardware, network, organization, projects] = results.map((result) =>
+//      result.status === "fulfilled" ? result.value : null
+//    );
+//
+//    if (!hardware) {
+//      return res.status(404).json({
+//        success: false,
+//        error: `Hardware with ID '${deviceData.hardwareId}' not found.`,
+//      });
+//    }
+//    if (!network) {
+//      return res.status(404).json({
+//        success: false,
+//        error: `Network with ID '${deviceData.networkId}' not found.`,
+//      });
+//    }
+//    if (!organization) {
+//      return res.status(404).json({
+//        success: false,
+//        error: `Organization with ID '${organization}' not found.`,
+////      });
+//    }
+//    if (!projects) {
+//      return res.status(404).json({
+//        success: false,
+//        error: `Project with ID '${deviceData.projectId}' not found.`,
+//      });
+//    }
+//    // Insert a single device using create
+//    const newDevice = await prisma.device.create({
+//      data: {
+//	      name:deviceData.name,
+//        manufacture:deviceData.manufacture,
+//        mainOutput: {
+//		data:deviceData.mainOutput
+//        },
+//        hardware: {
+//          connect: {
+//            id: deviceData.hardwareId
+//          }
+//        },
+//        networkId: deviceData.networkId,
+//        projects: {
+//          connect: {
+//            id: deviceData.projectId
+//          }
+//        },
+//        organization: {
+//          connect: {
+//            id: orgId.id
+//          }
+//        },
+//	      hardwareOutputId:deviceData.hardwareOutputId,
+//              deviceId:deviceData.deviceId,
+//        location:deviceData.location,
+//        deviceLocationName:deviceData.deviceLocationName,
+//        currentLocation:deviceData.currentLocation,
+//        network:deviceData.network,
+//      }
+//    });
+//
+//    res.status(201).json({ message: 'Device added successfully', newDevice });
+//  } catch (error) {
+//    console.error('Error adding device:', error);
+//    res.status(500).json({ error: 'Failed to add device' });
+//  }
+//};
 const createDevice = async (req, res) => {
-  const {deviceData} = req.body;
+  console.log(req.body);
+  const  deviceData  = req.body;
 
   try {
     const customerId = req.user.id;
-    // Check if the deviceId already exists
-    console.log("checking the frontend data----->",deviceData);
-    console.log("deviceId",deviceData.deviceId);
+
+    console.log("Checking frontend data ----->", deviceData);
+//    console.log("Device ID:", deviceData.deviceId);
+
     const existingDevice = await prisma.device.findUnique({
       where: {
         deviceId: deviceData.deviceId,
       },
     });
-	  const orgId = await prisma.organization.findFirst({
-      where:{
-        customerId:customerId
-      },
-      select:{
-        id:true
-      }
-    })
-
 
     if (existingDevice) {
       return res.status(400).json({
         success: false,
         error: `Device with deviceId '${deviceData.deviceId}' already exists.`,
-      })
+      });
     }
 
-    // Check if hardwareId, networkId, organizationId, and projectId exist using Promise.allSettled
+    const orgId = await prisma.organization.findFirst({
+      where: {
+        customerId: customerId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
     const results = await Promise.allSettled([
       prisma.hardware.findUnique({ where: { id: deviceData.hardwareId } }),
       prisma.networkmodel.findUnique({ where: { id: deviceData.networkId } }),
-      prisma.organization.findFirst({ where: { customerId:customerId } }),
+      prisma.organization.findFirst({ where: { customerId: customerId } }),
       prisma.projects.findUnique({ where: { id: deviceData.projectId } }),
     ]);
 
-    // Validate the results of the checks
     const [hardware, network, organization, projects] = results.map((result) =>
       result.status === "fulfilled" ? result.value : null
     );
@@ -60,7 +165,7 @@ const createDevice = async (req, res) => {
     if (!organization) {
       return res.status(404).json({
         success: false,
-        error: `Organization with ID '${organization}' not found.`,
+        error: `Organization with ID '${orgId?.id}' not found.`,
       });
     }
     if (!projects) {
@@ -69,46 +174,87 @@ const createDevice = async (req, res) => {
         error: `Project with ID '${deviceData.projectId}' not found.`,
       });
     }
-    // Insert a single device using create
+
+    const deviceCount = await prisma.device.count({
+      where: {
+        projectId: deviceData.projectId,
+      },
+    });
+
+    if (deviceCount >= projects.setLimit) {
+      return res.status(500).json({
+        success: false,
+        error: `Device limit reached for project '${deviceData.projectId}'. Maximum allowed: ${projects.setLimit}`,
+      });
+    }
+
+    // ✅ Create the device
     const newDevice = await prisma.device.create({
       data: {
-	      name:deviceData.name,
-        manufacture:deviceData.manufacture,
+        name: deviceData.name,
+        manufacture: deviceData.manufacture,
         mainOutput: {
-		data:deviceData.mainOutput
+          data: deviceData.mainOutput,
         },
         hardware: {
           connect: {
-            id: deviceData.hardwareId
-          }
+            id: deviceData.hardwareId,
+          },
         },
         networkId: deviceData.networkId,
         projects: {
           connect: {
-            id: deviceData.projectId
-          }
+            id: deviceData.projectId,
+          },
         },
         organization: {
           connect: {
-            id: orgId.id
-          }
+            id: orgId.id,
+          },
         },
-	      hardwareOutputId:deviceData.hardwareOutputId,
-              deviceId:deviceData.deviceId,
-        location:deviceData.location,
-        deviceLocationName:deviceData.deviceLocationName,
-        currentLocation:deviceData.currentLocation,
-        network:deviceData.network,
-      }
+        hardwareOutputId: deviceData.hardwareOutputId,
+        deviceId: deviceData.deviceId,
+        location: deviceData.location,
+        deviceLocationName: deviceData.deviceLocationName,
+        currentLocation: deviceData.currentLocation,
+        network: deviceData.network,
+      },
     });
 
-    res.status(201).json({ message: 'Device added successfully', newDevice });
+    // ✅ Fetch and add hardware outputs for the created device
+    const hardwareOutputs = await prisma.hardwareoutput.findMany({
+      where: { hardwareId: deviceData.hardwareId },
+    });
+
+    console.log("Fetched hardware outputs:", hardwareOutputs);
+
+    const outputData = hardwareOutputs.map(output => ({
+      deviceId: newDevice.id,
+      name: output.name,
+      unit: output.unit,
+      type: output.type,
+      description: "", 
+      linkedTo: ""
+    }));
+
+    if (outputData.length > 0) {
+      await prisma.output.createMany({ data: outputData });
+      console.log("Outputs created successfully.");
+    } else {
+      console.log("No hardware outputs found for this hardware.");
+    }
+
+    res.status(201).json({
+      message: "Device added successfully",
+      newDevice,
+    });
+
   } catch (error) {
-    console.error('Error adding device:', error);
-    res.status(500).json({ error: 'Failed to add device' });
+    console.error("Error adding device:", error);
+    res.status(500).json({ error: "Failed to add device" });
   }
-};
-    
+};    
+
 const getAllDevices = async (req, res) => {
   try {
     const devices = await deviceService.getAllDevices();
@@ -185,6 +331,28 @@ const updateDevice = async (req, res) => {
     });
   }
 };
+
+// // Delete Device
+// const deleteDevice = async (req, res) => {
+//   const { id } = req.params;
+
+//   try {
+//     const deleted = await deviceService.deleteDevice(parseInt(id));
+
+//     if (!deleted) {
+//       return res.status(404).json({ success: false, message: "Device not found" });
+//     }
+
+//     res.status(200).json({ success: true, message: "Device deleted successfully" });
+//   } catch (error) {
+//     console.error("Error deleting device:", error.message);
+//     res.status(500).json({
+//       success: false,
+//       message: "Error deleting device",
+//       error: error.message,
+//     });
+//   }
+// };
 
 // Delete Device
 const deleteDevice = async (req, res) => {
@@ -269,6 +437,19 @@ const createDeviceTest = async (req, res) => {
     });
   }
 };
+
+const getAttributesByHardwareId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const device = await deviceService.getAttributesByHardwareId(parseInt(id));
+    if (!device) {
+      return res.status(404).json({ success: false, message: 'Device not found' });
+    }
+    res.status(200).json({ success: true, data: device });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error retrieving Device', error: error.message });
+  }
+};
 module.exports = {
   createDevice,
   getAllDevices,
@@ -279,6 +460,7 @@ module.exports = {
   getDeviceByProjectId,
   devicesByCustomerId,
 	createDeviceTest,
+  getAttributesByHardwareId
   //addDevice
 };
 

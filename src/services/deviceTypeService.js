@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();// Assuming Prisma is configured and exported from this file
+const { prisma } = require('../lib/prisma.js');// Assuming Prisma is configured and exported from this file
 
 // Create a new Device Type
 exports.createDeviceType = async ({ name, description }) => {

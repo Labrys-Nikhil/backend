@@ -1,6 +1,5 @@
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 
 const fetchDecodedDataByDateTime = async (devEui, startDate, endDate, startTime, endTime) => {
   console.log('Fetching data for devEui:', devEui);

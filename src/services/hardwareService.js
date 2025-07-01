@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 
 const createHardware = async (data) => {
   // Include the organizationId in the data being passed to Prisma
@@ -12,7 +11,12 @@ const createHardware = async (data) => {
 };  
 
 const getAllHardware = async () => {
-  return await prisma.hardware.findMany();
+  return await prisma.hardware.findMany({
+    include: {
+      hardwareattributes:true,
+      hardwareoutput: true
+    }
+  });
 };
 
 const getHardwareById = async (id) => {

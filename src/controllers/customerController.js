@@ -4,7 +4,7 @@ const customerService = require('../services/customerService');
 const organizationService = require('../services/organizationService');
 
 const jwt = require('jsonwebtoken'); // For generating JWT tokens
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const emailService = require('../services/emailService');
 const logger = require('../utils/logger');
 const { upload, deleteImage } = require('../helper/imageHelper');
@@ -134,7 +134,7 @@ const loginCustomer = async (req, res) => {
     }
 
     // Generate a JWT token (Replace 'secretkey' with your actual secret or use environment variables)
-    const token = jwt.sign({ id: customer.id, firstName:customer.firstName,lastName:customer.lastName,email: customer.email, role: customer.role }, process.env.JWT_SECRET_KEY, { expiresIn: '15d' });
+    const token = jwt.sign({ id: customer.id, firstName:customer.firstName,lastName:customer.lastName,email: customer.email, role: customer.role_id }, process.env.JWT_SECRET_KEY, { expiresIn: '15d' });
 
     // Return success response with the JWT token
     res.status(200).json({ success: true, message: "Login successful", token });

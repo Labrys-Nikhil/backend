@@ -1,6 +1,5 @@
 const outputService = require('../services/outputService')
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 
 const createOutput = async (req, res) => {
     try {

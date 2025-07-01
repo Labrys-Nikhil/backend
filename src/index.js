@@ -11,11 +11,13 @@ require('dotenv').config();
 
 // Import the checkDownlinkStatuses function from downlinkJob.js
 const { checkDownlinkStatuses } = require('./controllers/downlinkJob'); // Correctly import the module
+const { checkScheduledDownlink } = require('./controllers/scheduleDownlinkJob');
+const {resetRescheduledDays} = require('./controllers/scheduleDownlinkJob')
 
 const app = express();
 
 // Middleware to parse JSON requests
-app.use(express.json());
+app.use(express.json()); 
 app.use(cors()); // Allows any origin
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -39,17 +41,28 @@ async function checkDatabaseConnection() {
 cron.schedule('* * * * *', () => {
   console.log('Running cron job to check downlink statuses...');
   checkDownlinkStatuses(); // Call the function to check downlink statuses
+
+   console.log("cron jon running for schedule downlink for weekely ...");
+  checkScheduledDownlink();
+});
+
+// Run at 12:00 AM every day
+cron.schedule("0 0 * * *", () => {
+  console.log(" Running midnight job to reset rescheduledDays...");
+  resetRescheduledDays();
 });
 
 
-// const options = {
-//   key: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/privkey.pem'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/soodprints.in/fullchain.pem')
-// };
+
+//  const options = {
+//    key: fs.readFileSync('/etc/letsencrypt/live/smartlynk.net/privkey.pem'),
+//    cert: fs.readFileSync('/etc/letsencrypt/live/smartlynk.net/fullchain.pem')
+//  };
 
 
-// Start the HTTPS server and check the database connection
-//const server = require('https').createServer(options, app);
+// // // Start the HTTPS server and check the database connection
+// const server = require('https').createServer(options, app);
+
 
 
 // Start the server and check the database connection

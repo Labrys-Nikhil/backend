@@ -3,8 +3,7 @@ const jwt = require("jsonwebtoken");
 // Define the secret key (ensure it's the same for both signing and verification)
 const LICENSE_SECRET_KEY = "my_super_secure_license_secret_123!";
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 
 
 const checkLicense = async (req, res, next) => {

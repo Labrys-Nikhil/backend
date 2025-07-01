@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 const createNetworkModel = async (networkModel) => {
     try {
       const networkData = await prisma.networkmodel.create({

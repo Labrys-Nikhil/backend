@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const axios = require('axios');
 
-const winston = require('winston');
+const axios = require('axios');
 const {controllerPDUByModel} = require('../helper/controllerPDUbyModel');
+const winston = require('winston');
 
 // Initialize logger
 const logger = winston.createLogger({
@@ -161,39 +159,26 @@ const postDownlinkDeviceOFF = async (data) => {
       deviceId
     });
 
-    const deviceData = await prisma.device.findFirst({
-      where: {
-        deviceId: devEui
-      },
-      select: {
-        hardwareId: true
-      }
-    })
+    let packet;
+    let relay1State = 'off';
+    let relay2State = 'off';
 
-    const hardwareData = await prisma.hardware.findFirst({
-      where: {
-        id: deviceData.hardwareId,
-      },
-      select: {
-        id: true,
-        //decoderPDU:true,
-        modelNo: true
-      }
-    });
-    console.log("device and hardware data", deviceData, hardwareData);
-
-    //then call the decodePDU for that hardware
-    const modelNumber = hardwareData.modelNo;
-
-    //last step to call the mapping;
-    const controllerPDUData = {
-      downlinkController: downlinkController,
-      pdu: pdu
+    if (downlinkController === "relay 1") {
+      packet = generateRelay1Packet(pdu);
+      relay1State = pdu === 'on' ? 'on' : 'off';
+    } else if (downlinkController === "relay 2") {
+      packet = generateRelay2Packet(pdu);
+      relay2State = pdu === 'on' ? 'on' : 'off';
+    } else if (downlinkController === "relay 1+2") {
+      packet = generateBothRelayPacket(pdu);
+      relay1State = pdu === 'on' ? 'on' : 'off';
+      relay2State = pdu === 'on' ? 'on' : 'off';
+    } else {
+      console.log("Invalid downlinkController:", downlinkController);
+      return { status: 400, message: "Invalid downlink controller" };
     }
-    console.log(controllerPDUData);
-    const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
 
-    console.log("data after the controllerPDU", responseOfControllerPDU);
+    console.log("Generated packet:", packet);
 
     const device = await prisma.device.findFirst({
       where: { id: deviceId },
@@ -267,27 +252,21 @@ const downlinkLoriotDeviceOFf = async (data) => {
       deviceId
     } = data;
 
-    //first get the hardware through devEUI and modelNumber.
-    const deviceData = await prisma.device.findFirst({
-      where: {
-        deviceId: devEui
-      },
-      select: {
-        hardwareId: true
-      }
-    })
+    const device = await prisma.device.findFirst({
+      where: { deviceId: devEui },
+    });
 
     const hardwareData = await prisma.hardware.findFirst({
       where: {
-        hardwareID: deviceData.hardwareId,
+        id: device.hardwareId,
       },
       select: {
-        hardwareID: true,
-        decoderPDU: true,
+        id: true,
+        //decoderPDU:true,
         modelNo: true
       }
     });
-
+    console.log("device and hardware data", device, hardwareData);
 
     //then call the decodePDU for that hardware
     const modelNumber = hardwareData.modelNo;
@@ -297,32 +276,38 @@ const downlinkLoriotDeviceOFf = async (data) => {
       downlinkController: downlinkController,
       pdu: pdu
     }
+    console.log(controllerPDUData);
     const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
 
-    console.log("data after the controllerPDU", responseOfControllerPDU);
 
-    const device = await prisma.device.findFirst({
-      where: { deviceId: devEui },
-    });
-    console.log("device acording to the devEUI in the autodownlink Settimeout", device);
-    
-    if (!device) {
-      console.log("Device not found with ID:", devEui);
-      return res.status(404).json({ message: "Device not found" });
-    }
-    
-    const network = await prisma.networkdata.findFirst({
+    const customerId = await prisma.organization.findFirst({
       where: {
-        organizationId: device.organizationId,
-        networkId: device.networkId,
-        customerId: customerId,
+        id: device.organizationId,
+      },
+      select: {
+        customerId: true,
       }
     })
-    
-    console.log("device acording to the network in the maptheDownlinkTospecificServer", network);
-    
+    console.log("cutomerId----->", customerId);
+    if (!device) {
+      logger.warn("Device not found in loriot downlink.");
+      return res.status(400).json({ error: 'Invalid: device not found in loriot downlink' });
+    }
+
+    logger.info("Device found:", { device });
+    console.log(device.networkId);
+    // Fetch network details
+    const network = await prisma.networkdata.findFirst({
+      where: {
+        networkId: device.networkId, // Use networkId from selected fields
+        organizationId: device.organizationId,
+        customerId: customerId.customerId,
+      },
+    });
+
     if (!network) {
-      return res.status(500).json({ message: "network not found" });
+      logger.warn("Network not found for the given device.");
+      return res.status(400).json({ error: 'Invalid: network not found' });
     }
 
     logger.info("Network found:", { network });
@@ -378,12 +363,53 @@ const downlinkLoriotDeviceOFf = async (data) => {
     logger.error("Error processing downlink:", { error: error.message });
     return {
       status: error.response?.status || 500,
-      message: 'Error sending data to SenRa',
+      message: 'Error sending data',
       details: error.response?.data || error.message
     };
   };
 };
 
+// Function to generate packet for Relay 1
+function generateRelay1Packet(value) {
+  const packet = {};
+  if (value.toLowerCase() === 'on') {
+    packet["Payload"] = "030111"; // Relay 1: On
+  } else if (value.toLowerCase() === 'off') {
+    packet["Payload"] = "030011"; // Relay 1: Off
+  } else {
+    packet["Payload"] = "031111"; // Relay 1: No change
+  }
+  packet["Port"] = "2";
+  return packet;
+}
+
+// Function to generate packet for Relay 2
+function generateRelay2Packet(value) {
+  const packet = {};
+  if (value.toLowerCase() === 'on') {
+    packet["Payload"] = "031101"; // Relay 2: On
+  } else if (value.toLowerCase() === 'off') {
+    packet["Payload"] = "031100"; // Relay 2: Off
+  } else {
+    packet["Payload"] = "031111"; // Relay 2: No change
+  }
+  packet["Port"] = "2";
+  return packet;
+}
+
+// Function to generate packet for Relay 1 and Relay 2
+function generateBothRelayPacket(value) {
+  const packet = {};
+  if (value.toLowerCase() === 'on') {
+    packet["Payload"] = "030101"; // Both Relays: On
+  } else if (value.toLowerCase() === 'off') {
+    packet["Payload"] = "030000"; // Both Relays: Off
+  } else {
+    packet["Payload"] = "031111"; // No change
+  }
+  packet["Port"] = "2";
+  return packet;
+}
 
 module.exports = { checkDownlinkStatuses };
 

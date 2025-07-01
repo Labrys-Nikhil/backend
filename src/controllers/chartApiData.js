@@ -167,101 +167,261 @@
 //     }
 // };
 // module.exports = { chartApiData }
+
+/////////////////////////////////////////////////////////////////////// prev code
+// const moment = require("moment");
+
+// const {subDays} = require('date-fns');
+
+// async function fetchAndSortData(output, devices, projectId, duration) {
+//     try {
+//         console.log("Fetching devEui for device ID:", devices[0]);
+
+//         // Find devEui
+//         const fetchdevEui = await prisma.device.findFirst({
+//             where: {
+//                 id: parseInt(devices[0]), // Ensure it's a valid number
+//                 projectId: parseInt(projectId),
+//             },
+//         });
+
+//         if (!fetchdevEui) {
+//             console.error(`Device not found for ID: ${devices[0]}`);
+//             throw new Error(`No device found with ID: ${devices[0]}`);
+//         }
+
+//         const devEui = fetchdevEui.deviceId;
+//         console.log("devEui fetched:", devEui);
+
+//         // Query device decoded data
+//         const externalResponse = await prisma.devicedecodedata.findMany({
+//             where: {
+//                 attributesName: String(output),
+//                 devEui: devEui, // Use the fetched devEui
+//                 timestamp: {
+//                     gte: subDays(new Date(), Number.parseInt(duration))
+//                 }
+//             },
+
+//             orderBy: {
+//                 timestamp: "asc", // Sort by descending timestamp
+//             },
+//         });
+
+//         console.log("Decoded data fetched:", externalResponse.length, "records found.");
+
+//         // Validate the response
+//         if (!externalResponse || externalResponse.length === 0) {
+//             console.error("No data found for the given devEui and output.");
+//             throw new Error("No data found for the given devEui and output.");
+//         }
+
+//         // Use moment to format timestamps
+//         const formattedResponse = externalResponse.map((item) => ({
+//             ...item,
+//             formattedTimestamp: moment(item.timestamp).format("YYYY-MM-DD HH:mm"), // Shorter format
+//         }));
+
+//         console.log("Data formatted successfully.");
+
+//         // Structure the response
+//         return {
+//             label: formattedResponse.map((item) => item.formattedTimestamp),
+//             data: formattedResponse.map((item) => parseFloat(item.attributesValue)),
+//             units: formattedResponse.map((item)=>item.attributesUnits)
+//         };
+//     } catch (error) {
+//         console.error("Error in fetchAndSortData:", error.message);
+//         throw new Error("Failed to fetch and sort data.");
+//     }
+// }
+
+// async function fetchTheRecentData(output, devices, projectId) {
+//     try {
+//         console.log("Fetching data for devices:", devices);
+
+//         // Store results for all devices
+//         const recentData = [];
+
+//         for (const deviceId of devices) {
+//             try {
+//                 console.log(`Fetching devEui for device ID: ${deviceId}`);
+
+//                 // Fetch devEui for the current device
+//                 const fetchdevEui = await prisma.device.findUnique({
+//                     where: {
+//                         id: parseInt(deviceId), // Ensure it's a valid number
+//                         projectId: parseInt(projectId),
+//                     },
+//                 });
+
+//                 if (!fetchdevEui) {
+//                     console.warn(`No device found for ID: ${deviceId}`);
+//                     recentData.push({ deviceId, name: "", attributesValue: "0" });
+//                     continue;
+//                 }
+
+//                 console.log(`devEui fetched for device ID ${deviceId}:`, fetchdevEui.deviceId);
+
+//                 // Fetch the most recent decoded data for the current device
+//                 const externalResponse = await prisma.devicedecodedata.findFirst({
+//                     where: {
+//                         attributesName: String(output),
+//                         devEui: fetchdevEui.deviceId,
+//                     },
+//                     orderBy: {
+//                         timestamp: "asc",
+//                     },
+//                 });
+
+//                 if (!externalResponse) {
+//                     console.warn(`No decoded data found for devEui: ${fetchdevEui.deviceId}`);
+//                     recentData.push({ deviceId, name: fetchdevEui.name, attributesValue: "0" });
+//                     continue;
+//                 }
+
+//                 console.log(`Decoded data found for device ID ${deviceId}:`, externalResponse);
+
+//                 recentData.push({
+//                     deviceId,
+//                     name: fetchdevEui.name,
+//                     attributesValue: externalResponse.attributesValue,
+//                     attributesUnits: externalResponse.attributesUnits || "",
+//                 });
+//             } catch (error) {
+//                 console.error(`Error fetching data for device ID: ${deviceId}`, error.message);
+//             }
+//         }
+
+//         console.log("Data fetching for all devices complete.");
+
+//         // Structure the final response
+//         return {
+//             label: recentData.map((item) => item.name),
+//             data: recentData.map((item) => parseInt(item.attributesValue)),
+//             units:recentData.map((item)=>item.attributesUnits || ""),
+//             message: `Data fetched for ${recentData.length} devices.`,
+//         };
+//     } catch (error) {
+//         console.error("Error in fetchTheRecentData:", error.message);
+//         throw new Error("Failed to fetch data for multiple devices from external API.");
+//     }
+// }
+
+// const chartApiData = async (req, res) => {
+//     const { output, devices, duration } = req.query;
+//     const { projectId } = req.params;
+
+//     console.log("API called with output:", output, "devices:", devices, "projectId:", projectId, "duration:", duration);
+
+//     if (!output || !devices || !projectId ) {
+//         console.error("Invalid request parameters:", { output, devices, projectId, duration });
+//         return res.status(400).json({ error: "Invalid request. Please provide 'output', 'devices', 'projectId'and 'duration'" });
+//     }
+
+//     try {
+//         const devicesArray = devices.split(',').map(id => parseInt(id, 10));
+//         console.log("Parsed devices:", devicesArray);
+
+//         let result;
+
+//         if (devicesArray.length < 2) {
+//             console.log("Single device detected. Fetching and sorting data.");
+//             result = await fetchAndSortData(output, devicesArray, projectId, duration);
+//         } else {
+//             console.log("Multiple devices detected. Fetching the most recent data.");
+//             result = await fetchTheRecentData(output, devicesArray, projectId);
+//         }
+
+//         console.log("Response prepared. Sending data back.");
+//         res.json(result);
+//     } catch (error) {
+//         console.error("Error in chartApiData handler:", error.message);
+//         res.status(500).json({ error: "Internal server error." });
+//     }
+// };
+
+
 const moment = require("moment");
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 const {subDays} = require('date-fns');
 
-async function fetchAndSortData(output, devices, projectId, duration) {
-    try {
-        console.log("Fetching devEui for device ID:", devices[0]);
 
-        // Find devEui
+
+async function fetchAndSortData(outputs, devices, projectId, duration) {
+    try {
         const fetchdevEui = await prisma.device.findFirst({
             where: {
-                id: parseInt(devices[0]), // Ensure it's a valid number
+                id: parseInt(devices[0]),
                 projectId: parseInt(projectId),
             },
         });
 
         if (!fetchdevEui) {
-            console.error(`Device not found for ID: ${devices[0]}`);
             throw new Error(`No device found with ID: ${devices[0]}`);
         }
 
         const devEui = fetchdevEui.deviceId;
-        console.log("devEui fetched:", devEui);
 
-        // Query device decoded data
-        const externalResponse = await prisma.devicedecodedata.findMany({
-            where: {
-                attributesName: String(output),
-                devEui: devEui, // Use the fetched devEui
-                timestamp: {
-                    gte: subDays(new Date(), Number.parseInt(duration))
+        const result = {};
+
+        for (const output of outputs) {
+            const externalResponse = await prisma.devicedecodedata.findMany({
+                where: {
+                    attributesName: String(output),
+                    devEui: devEui,
+                    timestamp: {
+                        gte: subDays(new Date(), Number.parseInt(duration))
+                    }
+                },
+                orderBy: {
+                    timestamp: "asc"
                 }
-            },
+            });
 
-            orderBy: {
-                timestamp: "desc", // Sort by descending timestamp
-            },
-        });
+            if (externalResponse.length > 0) {
+                const formatted = externalResponse.map((item) => ({
+                    ...item,
+                    formattedTimestamp: moment(item.timestamp).format("YYYY-MM-DD HH:mm"),
+                }));
 
-        console.log("Decoded data fetched:", externalResponse.length, "records found.");
-
-        // Validate the response
-        if (!externalResponse || externalResponse.length === 0) {
-            console.error("No data found for the given devEui and output.");
-            throw new Error("No data found for the given devEui and output.");
+                result[output] = {
+                    label: formatted.map(item => item.formattedTimestamp),
+                    data: formatted.map(item => parseFloat(item.attributesValue)),
+                    units: formatted.map(item => item.attributesUnits || ""),
+                };
+            } else {
+                result[output] = { label: [], data: [], units: [] };
+            }
         }
 
-        // Use moment to format timestamps
-        const formattedResponse = externalResponse.map((item) => ({
-            ...item,
-            formattedTimestamp: moment(item.timestamp).format("YYYY-MM-DD HH:mm"), // Shorter format
-        }));
-
-        console.log("Data formatted successfully.");
-
-        // Structure the response
-        return {
-            label: formattedResponse.map((item) => item.formattedTimestamp),
-            data: formattedResponse.map((item) => parseFloat(item.attributesValue)),
-        };
+        return result;
     } catch (error) {
         console.error("Error in fetchAndSortData:", error.message);
         throw new Error("Failed to fetch and sort data.");
     }
 }
 
-async function fetchTheRecentData(output, devices, projectId) {
+async function fetchTheRecentData(outputs, devices, projectId) {
     try {
-        console.log("Fetching data for devices:", devices);
+        const finalData = {};
 
-        // Store results for all devices
-        const recentData = [];
+        for (const output of outputs) {
+            const recentData = [];
 
-        for (const deviceId of devices) {
-            try {
-                console.log(`Fetching devEui for device ID: ${deviceId}`);
-
-                // Fetch devEui for the current device
-                const fetchdevEui = await prisma.device.findUnique({
+            for (const deviceId of devices) {
+                const fetchdevEui = await prisma.device.findFirst({
                     where: {
-                        id: parseInt(deviceId), // Ensure it's a valid number
+                        id: parseInt(deviceId),
                         projectId: parseInt(projectId),
                     },
                 });
 
                 if (!fetchdevEui) {
-                    console.warn(`No device found for ID: ${deviceId}`);
                     recentData.push({ deviceId, name: "", attributesValue: "0" });
                     continue;
                 }
 
-                console.log(`devEui fetched for device ID ${deviceId}:`, fetchdevEui.deviceId);
-
-                // Fetch the most recent decoded data for the current device
                 const externalResponse = await prisma.devicedecodedata.findFirst({
                     where: {
                         attributesName: String(output),
@@ -272,37 +432,30 @@ async function fetchTheRecentData(output, devices, projectId) {
                     },
                 });
 
-                if (!externalResponse) {
-                    console.warn(`No decoded data found for devEui: ${fetchdevEui.deviceId}`);
-                    recentData.push({ deviceId, name: fetchdevEui.name, attributesValue: "0" });
-                    continue;
-                }
-
-                console.log(`Decoded data found for device ID ${deviceId}:`, externalResponse);
-
                 recentData.push({
                     deviceId,
                     name: fetchdevEui.name,
-                    attributesValue: externalResponse.attributesValue,
+                    attributesValue: externalResponse?.attributesValue || "0",
+                    attributesUnits: externalResponse?.attributesUnits || "",
                 });
-            } catch (error) {
-                console.error(`Error fetching data for device ID: ${deviceId}`, error.message);
             }
+
+            finalData[output] = {
+                label: recentData.map(item => item.name),
+                data: recentData.map(item => parseFloat(item.attributesValue)),
+                units: recentData.map(item => item.attributesUnits),
+            };
         }
 
-        console.log("Data fetching for all devices complete.");
+       console.log("Recent data fetched for all devices:", finalData);
 
-        // Structure the final response
-        return {
-            label: recentData.map((item) => item.name),
-            data: recentData.map((item) => parseInt(item.attributesValue)),
-            message: `Data fetched for ${recentData.length} devices.`,
-        };
+        return finalData;
     } catch (error) {
         console.error("Error in fetchTheRecentData:", error.message);
-        throw new Error("Failed to fetch data for multiple devices from external API.");
+        throw new Error("Failed to fetch data for multiple devices.");
     }
 }
+
 
 const chartApiData = async (req, res) => {
     const { output, devices, duration } = req.query;
@@ -314,8 +467,10 @@ const chartApiData = async (req, res) => {
         console.error("Invalid request parameters:", { output, devices, projectId, duration });
         return res.status(400).json({ error: "Invalid request. Please provide 'output', 'devices', 'projectId'and 'duration'" });
     }
-
+      
     try {
+        const outputsArray = Array.isArray(output) ? output : [output];
+         console.log("Parsed outputs:", outputsArray);
         const devicesArray = devices.split(',').map(id => parseInt(id, 10));
         console.log("Parsed devices:", devicesArray);
 
@@ -323,10 +478,10 @@ const chartApiData = async (req, res) => {
 
         if (devicesArray.length < 2) {
             console.log("Single device detected. Fetching and sorting data.");
-            result = await fetchAndSortData(output, devicesArray, projectId, duration);
+            result = await fetchAndSortData(outputsArray, devicesArray, projectId, duration);
         } else {
             console.log("Multiple devices detected. Fetching the most recent data.");
-            result = await fetchTheRecentData(output, devicesArray, projectId);
+            result = await fetchTheRecentData(outputsArray, devicesArray, projectId);
         }
 
         console.log("Response prepared. Sending data back.");
@@ -338,4 +493,5 @@ const chartApiData = async (req, res) => {
 };
 
 module.exports = { chartApiData };
+
 

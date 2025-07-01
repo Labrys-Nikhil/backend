@@ -30,7 +30,7 @@ const prisma = new PrismaClient();
 // };
 
 const authenticateUser = async (req, res, next) => {
-  console.log('Authorization header:', req.headers['authorization']);
+//  console.log('Authorization header:', req.headers['authorization']);
   const token = req.headers['authorization']?.split(' ')[1];
 
   if (!token) {
@@ -54,12 +54,12 @@ const authenticateUser = async (req, res, next) => {
       return res.status(401).json({ error: 'Token is blacklisted' });
     }
 
-    console.log('Verifying JWT token');
+  //  console.log('Verifying JWT token');
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY); // Decode the token with your JWT secret
-    console.log('Token decoded successfully:', decoded);
+   // console.log('Token decoded successfully:', decoded);
 
     req.user = decoded; // Store the decoded user info (email, userId, etc.) in the request object
-    console.log('User info added to request:', req.user);
+  //  console.log('User info added to request:', req.user);
 
     next(); // Move to the next middleware/controller if token is valid
   } catch (error) {

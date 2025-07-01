@@ -1,6 +1,5 @@
 
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 const logger = require("../utils/logger");
 
 const createNetworkData = async (networkId, networkData) => {
@@ -38,10 +37,14 @@ const createNetworkData = async (networkId, networkData) => {
   }
 };
 
-const getNetworkDataByNetworkId = async (networkId) => {
+const getNetworkDataByNetworkId = async (networkId,customerId) => {
   try {
     return await prisma.networkdata.findMany({
-      where: { networkId },
+	    where: { networkId:networkId,
+            customerId:customerId
+      },
+
+      include: { network: true, customer: true },
     });
   } catch (error) {
     throw new Error("Error fetching network data: " + error.message);
@@ -103,7 +106,7 @@ const createOrUpdateNetworkData = async (networkModelId, data, customerId) => {
 
     // Step 2: Check if networkdata exists for this networkModel
     const existingNetworkData = await prisma.networkdata.findFirst({
-      where: { networkId: id },
+	    where: { networkId: id, customerId:customerId },
     });
 
     let result={};
@@ -128,6 +131,7 @@ const createOrUpdateNetworkData = async (networkModelId, data, customerId) => {
         data: {
           networkId: id, // Assign networkModel ID to networkdata
           organizationId: organization.id,
+	  customerId:customerId,
           ...data,
         },
       });

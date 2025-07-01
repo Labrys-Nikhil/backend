@@ -4,14 +4,14 @@ function generateControllerPDULT2222(downlinkController,pdu){
     let packet;
     let relay1State = 'off';
     let relay2State = 'off';
-
-    if (downlinkController === "relay 1") {
+    
+    if (downlinkController.toLowerCase().replace(/\s+/g, '') === "relay1") {
         packet = generateRelay1Packet(pdu);
         relay1State = pdu === 'on' ? 'on' : 'off';
-    } else if (downlinkController === "relay 2") {
+    } else if (downlinkController.toLowerCase().replace(/\s+/g, '') === "relay2") {
         packet = generateRelay2Packet(pdu);
         relay2State = pdu === 'on' ? 'on' : 'off';
-    } else if (downlinkController === "relay 1+2") {
+    } else if (downlinkController.toLowerCase().replace(/\s+/g, '') === "relay 1+2") {
         packet = generateBothRelayPacket(pdu);
         relay1State = pdu === 'on' ? 'on' : 'off';
         relay2State = pdu === 'on' ? 'on' : 'off';
@@ -67,3 +67,4 @@ function generateBothRelayPacket(value) {
 }
 
 module.exports={generateControllerPDULT2222};
+

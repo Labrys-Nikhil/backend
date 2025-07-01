@@ -1,11 +1,9 @@
-
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
-const logger = require('../utils/logger'); // Assuming you have a logger setup
+const { prisma } = require('../lib/prisma.js');
+const logger = require('../utils/logger');
 
 const createHardwareOutputs = async (data) => {
     try {
-        const { hardwareId, outputs } = data; 
+        const { hardwareId, outputs } = data;
         
         const createdOutputs = await Promise.all(
             outputs.map(async (output) => {
@@ -75,30 +73,18 @@ const getAllHardwareOutputs = async () => {
     }
 };
 
-
-   const getHardwareOutputByhardwareId =  async (hardwareId) =>{
-        try {
-            return await prisma.hardwareoutput.findMany({
-                where: { hardwareId }
-            });
-        } catch (error) {
-            console.error("Error fetching hardware output:", error);
-            throw new Error("Failed to fetch hardware outputs.");
-        }
-    }
 const getHardwareOutputById = async (id) => {
         try {
             const output = await prisma.hardwareoutput.findMany({
-                where: { id: {in:id} }, 
+                where: { id: {in:id} },
             });
-    
+
             return output;
         } catch (error) {
             console.error("Error fetching hardwareOutput by ID:", error);
-            throw new Error("Database query failed"); 
+            throw new Error("Database query failed");
         }
-    };
-
+};
 
 const updateHardwareOutput = async (id, data) => {
     try {
@@ -123,12 +109,34 @@ const deleteHardwareOutput = async (id) => {
     }
 };
 
+const getHardwareOutputByhardwareId =  async (hardwareId) =>{
+    try {
+        return await prisma.hardwareoutput.findMany({
+            where: { hardwareId }
+        });
+    } catch (error) {
+        console.error("Error fetching hardware output:", error);
+        throw new Error("Failed to fetch hardware outputs.");
+    }
+}
+
+const getAllHardwareOutputsByCustomerId = async (customerId) => {
+    try {
+        const hardwareOutputs = await prisma.hardwareoutput.findMany();
+        return hardwareOutputs;
+    } catch (error) {
+        logger.error(`Failed to retrieve hardwareOutputs by customer ID: ${error.message}`, { error });
+        throw new Error("Error retrieving hardwareOutputs by customer ID");
+    }
+};
+
 module.exports = {
     createHardwareOutputs,
     getAllHardwareOutputs,
-    getHardwareOutputByhardwareId,
     getHardwareOutputById,
     updateHardwareOutput,
     deleteHardwareOutput,
+    getHardwareOutputByhardwareId,
+    getAllHardwareOutputsByCustomerId
 };
 

@@ -2,9 +2,9 @@
 const { postDownlinkDevice } = require('../controllers/downlinkController');
 const { downlinkLoriotForAuto } = require('../controllers/loriotAutoDownlink');
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 
+// This is for autodownlink based on alert
 async function SendDownlink(alert, deviceEui) {
   try {
     // Fetch the auto-downlink for the specific alertId

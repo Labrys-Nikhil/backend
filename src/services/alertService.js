@@ -1,7 +1,5 @@
-// src/services/alertsService.js
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../lib/prisma.js');
 const { autodownlink } = require('../config/database');
-const prisma = new PrismaClient();
 
 const getAllAlerts = async () => {
     try {
@@ -10,7 +8,7 @@ const getAllAlerts = async () => {
                 device: true, // Include device data if needed
             },
         });
-        return alerts; 
+        return alerts;
     } catch (error) {
         throw new Error('Failed to retrieve alerts: ' + error.message);
     }
@@ -129,7 +127,7 @@ const getAllAlertsByProjectId = async ({ projectId }) => {
 const createAlert = async (alertData) => {
     try {
         let alertName = alertData.name;
-        console.log("alertName agaya hai bhai",alertName);
+        console.log("alertName agaya hai bhai", alertName);
 
         // If the user does not provide a name (check if alertName is not undefined or empty)
         if (!alertName || alertName.trim().length === 0) {
@@ -159,14 +157,14 @@ const createAlert = async (alertData) => {
     }
 };
 
-const updateAlert = async({data,alertId})=>{
+const updateAlert = async ({ data, alertId }) => {
 
     try {
         const alertUpdate = await prisma.alerts.update({
             where: {
                 id: Number(alertId)
             },
-            data:{
+            data: {
                 name: data.alertName,
                 deviceId: data.deviceId,
                 operator: data.operator,
@@ -181,8 +179,28 @@ const updateAlert = async({data,alertId})=>{
         throw new Error('Failed to update alert: ' + error.message);
     }
 }
+const deleteAlert = async (id) => {
+    try {
 
+        const alertId = parseInt(id);
+        const deleteNotification = await prisma.notification.deleteMany({
+            where: { alertId: alertId }
+        })
 
-module.exports = { getAllAlerts, getAllAlertsByProjectId, createAlert,updateAlert};
+        const deleteAutodownlinkAlert = await prisma.autodownlink.deleteMany({
+            where: { alertId: alertId }
+        })
+
+        const alertDelete = await prisma.alerts.delete({
+            where: { id: alertId },
+        });
+        return { alertDelete, deleteNotification, deleteAutodownlinkAlert };
+    } catch (error) {
+        console.log('Error deleting alert:', error);
+        throw error;
+    }
+};
+
+module.exports = { getAllAlerts, getAllAlertsByProjectId, createAlert, updateAlert,deleteAlert};
 
 

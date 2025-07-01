@@ -127,12 +127,12 @@
 
 //module.exports = {downlinkLoriotForAuto}
 //
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const { controllerPDUByModel } = require('../helper/controllerPDUbyModel');
+const {controllerPDUByModel} = require('../helper/controllerPDUbyModel');
 
+// this function is used for alert downlink
 const downlinkLoriotForAuto = async (req, res) => {
 
     // user token is being send to get the customer and network info through the customer id 
@@ -151,103 +151,71 @@ const downlinkLoriotForAuto = async (req, res) => {
     const device = req.device;
     console.log("device fetched:", device);
 
-    const networkAppid = await prisma.networkdata.findFirst({
-        where: {
-            networkId: device.networkId,
-        },
-        select: {
-            appid: true,
-        }
-    });
-
-    const deviceData = await prisma.device.findFirst({
-        where: {
-            deviceId: devEui
-        },
-        select: {
-            hardwareId: true
-        }
-    })
-
-    const hardwareData = await prisma.hardware.findFirst({
-        where: {
-            id: deviceData.hardwareId,
-        },
-        select: {
-            id: true,
-            //decoderPDU:true,
-            modelNo: true
-        }
-    });
-    console.log("device and hardware data", deviceData, hardwareData);
-
-    //then call the decodePDU for that hardware
-    const modelNumber = hardwareData.modelNo;
-
-    //last step to call the mapping;
-    const controllerPDUData = {
-        downlinkController: downlinkController,
-        pdu: pdu
-    }
-    console.log(controllerPDUData);
-    const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
-
-    console.log("data after the controllerPDU", responseOfControllerPDU);
-
-    // const loriotData = {
-    //     EUI: devEui,
-    //     port: Number(port) || 2,
-    //     confirmed: true,
-    //     priority: 1,
-    //     data: packet["Payload"],
-    //     appid: networkAppid.appid,
-    // }
-    console.log('autodownlink networkAppid ---->', networkAppid);
-    console.log('autodownlink payload for loriot ---->', loriotData);
-    // if (!authorization) {
-    //     console.error("Authorization header is missing");
-    //     return res.status(401).json({ error: 'Authorization header is missing' });
-    // }
-
     try {
-        // Decode and validate JWT token
-        // const token = authorization.replace('Bearer ', '');
-        // console.log("Decoded JWT token:", token);
-
-        // const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        // console.log("Decoded JWT payload:", decoded);
 
         //first find the customer id
         const device = await prisma.device.findFirst({
-            where: { deviceId: devEui },
+            where: {
+                deviceId: devEui, // Replace with actual deviceId
+            }
         });
-        console.log("device acording to the devEUI in the autodownlink Settimeout", device);
-
-        if (!device) {
-            console.log("Device not found with ID:", devEui);
-            return res.status(404).json({ message: "Device not found" });
-        }
-        const organization = await prisma.organization.findFirst({
-            where:{
-                id:device.organizationId,
+        // step to find the pdu for the downlink process
+        const hardwareData = await prisma.hardware.findFirst({
+            where: {
+                id: device.hardwareId,
             },
-            select:{
-                id:true,
-                customerId:true
+            select: {
+                id: true,
+                //decoderPDU:true,
+                modelNo: true
+            }
+        });
+        console.log("device and hardware data", device, hardwareData);
+
+        //then call the decodePDU for that hardware
+        const modelNumber = hardwareData.modelNo;
+
+        //last step to call the mapping;
+        const controllerPDUData = {
+            downlinkController: downlinkController,
+            pdu: pdu
+        }
+        console.log(controllerPDUData);
+        const responseOfControllerPDU = await controllerPDUByModel(controllerPDUData, modelNumber);
+
+        console.log("data after the controllerPDU", responseOfControllerPDU);
+
+        const customerId = await prisma.organization.findFirst({
+            where: {
+                id: device.organizationId,
+            },
+            select: {
+                customerId: true,
             }
         })
+        console.log("cutomerId ------------>", customerId);
+        if (!device) {// customer id 
+            console.error("Invalid : device not found in loriot downlink");
+            // return res.status(400).json({ error: 'Invalid : device not found in loriot downlink' });
+            return null;
+        }
+
+        // Fetch networkmodel details based on customerId
         const network = await prisma.networkdata.findFirst({
             where: {
-                organizationId: device.organizationId,
                 networkId: device.networkId,
-                customerId: organization.customerId,
-            }
-        })
+                organizationId: device.organizationId,
+                customerId: customerId.customerId,
+            },
+            // select: { name: true, token: true }, // Fetch servername (name) and Authorization token
+        });
 
-        console.log("device acording to the network in the maptheDownlinkTospecificServer", network);
+        console.log("Fetched network details:", network);
 
         if (!network) {
-            return res.status(500).json({ message: "network not found" });
+            console.error("Network not found for this customerId:", customerId);
+            // return res.status(404).json({ error: 'Network not found for this customer' });
+            return null;
         }
 
         const servername = network.hostname;
@@ -270,7 +238,7 @@ const downlinkLoriotForAuto = async (req, res) => {
             confirmed: true,
             priority: 1,
             data: responseOfControllerPDU?.Payload,
-            appid: networkAppid.appid,
+            appid: network.appid,
         };
         console.log("Downlink payload:", payload);
 
@@ -313,6 +281,10 @@ const downlinkLoriotForAuto = async (req, res) => {
         return null;
     }
 };
+
+
+
+
 
 module.exports = { downlinkLoriotForAuto }
 

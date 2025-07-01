@@ -1,5 +1,4 @@
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient;
+const { prisma } = require('../lib/prisma.js');
 
 // Mapping function for SenRa Payload
 const mapSenRaPayloadToNativeModel = async(senRaPayload)=> {

@@ -1,5 +1,5 @@
 const prisma = require('../config/database');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const logger = require('../utils/logger');
 const emailService = require('./emailService');  // Import the email service
 const saltRounds = 10;
@@ -28,7 +28,7 @@ exports.createCustomer = async (customerData) => {
         countryCode,
         phoneNumber,
         email,
-        role: role || 'customer',
+//        role: role || 'customer',
       },
     });
 

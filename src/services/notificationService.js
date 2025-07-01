@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 const logger = require('../utils/logger');
 
 // Fetch all notifications from the database, ordered by createdAt in descending order
@@ -54,5 +53,24 @@ const getAllNotificationsByProjectId = async ({ projectId }) => {
 };
 
 
-module.exports = { getAllNotifications,getAllNotificationsByProjectId };
+  const getNotificationsByDeviceId = async (deviceId) => {
+    try {
+      // Fetch notifications from the database based on deviceId
+      const notifications = await prisma.notification.findMany({
+        where: {
+          deviceId: deviceId,
+        },
+        include: {
+          device: true, // Optionally include device details
+          alerts: true, // Optionally include alert details
+        },
+      });
+
+      return notifications;
+    } catch (error) {
+      throw new Error("Failed to fetch notifications: " + error.message);
+    }
+  };
+
+module.exports = { getAllNotifications,getAllNotificationsByProjectId, getNotificationsByDeviceId };
 

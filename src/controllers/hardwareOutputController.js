@@ -19,21 +19,18 @@ const getAllHardwareOutputs = async (req, res) => {
     }
 };
 
-const getHardwareOutputByhardwareId = async (req, res) => {
+const getAllHardwareOutputsByCustomerId = async (req, res) => {
+    const customerId  = req.user.id; // Get customerId from URL params
     try {
-        const { hardwareId } = req.params; // Get hardwareId from URL params
-        const hardwareOutputs = await hardwareOutputService.getHardwareOutputByhardwareId(parseInt(hardwareId));
-
+        const hardwareOutputs = await hardwareOutputService.getAllHardwareOutputsByCustomerId(parseInt(customerId));
         if (hardwareOutputs.length === 0) {
-            return res.status(404).json({ message: "No hardware outputs found for the given hardwareId." });
+            return res.status(404).json({ message: "No hardware outputs found for the given customerId." });
         }
-
         res.json(hardwareOutputs);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
-// hardwareoutput controller
 
 const getHardwareOutputById = async (req, res) => {
     try {
@@ -79,7 +76,6 @@ const getHardwareOutputById = async (req, res) => {
     }
 };
 
-
 const updateHardwareOutput = async (req, res) => {
     const { id } = req.params;
     const hardwareOutputData = req.body;
@@ -107,12 +103,28 @@ const deleteHardwareOutput = async (req, res) => {
     }
 };
 
+const getHardwareOutputByhardwareId = async (req, res) => {
+    try {
+        const { hardwareId } = req.params; // Get hardwareId from URL params
+        const hardwareOutputs = await hardwareOutputService.getHardwareOutputByhardwareId(parseInt(hardwareId));
+
+        if (hardwareOutputs.length === 0) {
+            return res.status(404).json({ message: "No hardware outputs found for the given hardwareId." });
+        }
+
+        res.json(hardwareOutputs);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 module.exports = {
     createHardwareOutput,
     getAllHardwareOutputs,
-    getHardwareOutputByhardwareId,
     getHardwareOutputById,
     updateHardwareOutput,
     deleteHardwareOutput,
+    getHardwareOutputByhardwareId,
+    getAllHardwareOutputsByCustomerId
 };
 

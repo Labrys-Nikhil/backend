@@ -1,7 +1,6 @@
 // services/timezoneService.js
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 
 // Create a new timezone
 const createTimezone = async (name, offset) => {

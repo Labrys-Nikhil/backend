@@ -1142,8 +1142,7 @@ module.exports = {
 
 
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 const logger = require('../utils/logger'); // Assuming you already have the logger set up
 const emailService = require('../services/emailService')
 const moment = require('moment-timezone');

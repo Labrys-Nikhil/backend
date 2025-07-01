@@ -54,5 +54,21 @@ const updateAlertById = async (req,res)=>{
         return res.status(500).json({ message: error.message });
     }
 }
-module.exports = { getAllAlerts, getAllAlertsByProjectId,createAlert,updateAlertById };
+
+const deleteAlert = async (req, res) => {
+    const { id } = req.params;
+  
+    try {
+      const deletedAlert = await alertsService.deleteAlert(id);
+      return res.status(200).json({
+        data: deletedAlert,
+        message: 'Alert and Notification deleted successfully',
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: error.message || 'Error deleting alert',
+      });
+    }
+};
+module.exports = { getAllAlerts, getAllAlertsByProjectId,createAlert,updateAlertById,deleteAlert };
 

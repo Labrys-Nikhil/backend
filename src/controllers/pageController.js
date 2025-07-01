@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 
 const getallpages = async (req, res) => {
   const { projectId } = req.params;

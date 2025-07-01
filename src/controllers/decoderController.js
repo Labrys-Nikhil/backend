@@ -1,5 +1,4 @@
 // controllers/deviceHardwareTypeController.js
-const prisma = require('../prismaClient'); // Adjust the path to your Prisma client
 
 const getDecoderName = async (req, res) => {
     const { id } = req.params;

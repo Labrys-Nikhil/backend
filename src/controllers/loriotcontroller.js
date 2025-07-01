@@ -1,13 +1,11 @@
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const { mapLoriotPayloadToNativeModel } = require('../helper/deviceSeverDataMapping');
 
-const deviceService = require("../services/deviceServerData")
+const deviceService = require("../services/deviceServerData");
 
-;
 const fetchAndStoreUplinkMessages = async (req, res) => {
     console.log("Received uplink request.");
     try {
@@ -34,7 +32,8 @@ const downlinkLoriot = async (req, res) => {
     console.log("Received downlink request.");
     const { EUI, port, confirmed, priority, data, appid } = req.body;
     console.log("Request body received:", { EUI, port, confirmed, priority, data, appid });
-
+    const customerId = req.customerId;
+    console.log(customerId);
     try {
 
         const device = await prisma.device.findFirst({
@@ -52,6 +51,8 @@ const downlinkLoriot = async (req, res) => {
         const network = await prisma.networkdata.findFirst({
             where: {
                 networkId: device.networkId, // Use networkId from selected fields
+                organizationId: device.organizationId,
+                customerId: customerId,
             },
         });
 
@@ -61,7 +62,6 @@ const downlinkLoriot = async (req, res) => {
         }
 
         console.log("Network found:", { network });
-
 
         const servername = network.hostname;
         const serverToken = network.token;
@@ -87,8 +87,8 @@ const downlinkLoriot = async (req, res) => {
         return response;
     } catch (error) {
         console.log("Error processing downlink:", { error: error.message });
-	return error;
-	    //    return res.status(500).json({ error: 'Failed to process request', details: error.message });
+        return error;
+        //    return res.status(500).json({ error: 'Failed to process request', details: error.message });
     }
 };
 

@@ -24,8 +24,11 @@ const createNetworkData = async (req, res) => {
 
 const getNetworkDataByNetworkId = async (req, res) => {
     try {
+
+        const customerId = req.user.id;
         const networkId = parseInt(req.params.networkId);
-        const networkData = await networkDataService.getNetworkDataByNetworkId(networkId);
+        console.log("customerId and netwrok data controller IDs",customerId,networkId);
+	const networkData = await networkDataService.getNetworkDataByNetworkId(networkId,customerId);
         
         if (!networkData.length) {
             return res.status(404).json({ success: false, message: "Network data not found" });

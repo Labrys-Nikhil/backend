@@ -1,6 +1,5 @@
 // autoDownlinkService.js
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../lib/prisma.js');
 
 // Create an AutoDownlink record
 async function createAutoDownlink(alertId, timeout, schedule, port, controllerList, classType, device, pdu) {
