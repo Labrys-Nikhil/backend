@@ -9,10 +9,9 @@ require("dotenv").config();
 // Function to send verification email
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false, // Use true for port 465, false for 587
-  requireTLS: true,
+  host: "smtp.zoho.com",
+  port: 465,
+  secure: true, 
   auth: {
     user: process.env.EMAIL_USER, // Your email from .env file
     pass: process.env.EMAIL_PASS, // Your email password from .env file
