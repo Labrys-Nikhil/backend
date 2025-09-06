@@ -1,29 +1,16 @@
-const {
-  pduToByteArrayToWaterQuality,
-} = require("../helper/decoders/pduWaterQuality");
-const { decodeLDDS75Payload } = require("../helper/decoders/LDDS75-8Decoder");
-const {
-  decodePDUForIOContoller,
-} = require("../helper/decoders/decodePDUForIOContoller");
-const {
-  decodeUltraSonicSensor,
-} = require("../helper/decoders/decodeUltraSonicSensor");
-const {
-  decodePDUForTemperature,
-} = require("../helper/decoders/decodePDUForTemperature");
-const {
-  smartCurrentTansformer,
-} = require("../helper/decoders/energyCurrentDecoder");
-const { decodeEM400TLD } = require("../helper/decoders/em400TldDecoder");
-const { decodeEM500SWL } = require("../helper/decoders/em500SwlDecoder");
-const {
-  milesightDeviceDecodeUC50x,
-} = require("../helper/decoders/UC50xdecoder");
-const {
-  milesightDeviceDecodeEM300_DI,
-} = require("../helper/decoders/EM300DIdecoder.js");
-const { milesightDeviceDecodeUC300 } = require("./decoders/UC300-decoder");
-const { ts301Milesight } = require("./decoders/ts301decoder.js");
+const {pduToByteArrayToWaterQuality,} = require("../helper/decoders/pduWaterQuality");
+const {decodeLDDS75Payload } = require("../helper/decoders/LDDS75-8Decoder");
+const {decodePDUForIOContoller,} = require("../helper/decoders/decodePDUForIOContoller");
+const {decodeUltraSonicSensor,} = require("../helper/decoders/decodeUltraSonicSensor");
+const {decodePDUForTemperature,} = require("../helper/decoders/decodePDUForTemperature");
+const {smartCurrentTansformer,} = require("../helper/decoders/energyCurrentDecoder");
+const {decodeEM400TLD } = require("../helper/decoders/em400TldDecoder");
+const {decodeEM500SWL } = require("../helper/decoders/em500SwlDecoder");
+const {milesightDeviceDecodeUC50x,} = require("../helper/decoders/UC50xdecoder");
+const {milesightDeviceDecodeEM300_DI,} = require("../helper/decoders/EM300DIdecoder.js");
+const {milesightDeviceDecodeUC300 } = require("./decoders/UC300-decoder");
+const {ts301Milesight } = require("./decoders/ts301decoder.js");
+const{decodeRS485Full} = require("./decoders/decoderPduForRS485.js");
 
 function decodePDUByModel(pdu, modelNumber) {
   switch (modelNumber) {
@@ -53,6 +40,8 @@ function decodePDUByModel(pdu, modelNumber) {
       return milesightDeviceDecodeUC300(pdu);
     case "UC51xdecoder":
       return milesightDeviceDecodeUC51x;
+    case "RS485-LNDecoder":
+      return decodeRS485Full(pdu);
     default:
       throw new Error(`Unsupported model number: ${modelNumber}`);
   }

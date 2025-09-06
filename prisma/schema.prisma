@@ -449,13 +449,13 @@ model card {
 }
 
 model HardwareController {
-  id         Int      @id @default(autoincrement())
-  name       String   @db.VarChar(100)
-  urlString  String?
-  hardwareId Int
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  hardware   hardware @relation(fields: [hardwareId], references: [id])
+  id                    Int      @id @default(autoincrement())
+  name                  String   @db.VarChar(100)
+  controllerPdufunction String?
+  hardwareId            Int
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  hardware              hardware @relation(fields: [hardwareId], references: [id])
 
   @@index([hardwareId])
 }

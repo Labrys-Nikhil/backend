@@ -45,6 +45,7 @@ const scheduleDownlinkController = require('../controllers/scheduleDownlinkContr
 const permissionController = require('../controllers/permissionsController');
 const roleController = require('../controllers/roleController')
 const modulesController = require('../controllers/modulesController');
+const { JsonWebTokenError } = require('jsonwebtoken');
 
 const router = express.Router();
 
@@ -386,5 +387,8 @@ router.get('/get-view-permissions-by-role-id',authenticateUser, permissionContro
 
 // get all role
 router.get('/get-all-roles',authenticateUser, roleController.getAllRoles)
+
+//create customer command.
+router.post('/custom-meter-commands', downlinkMapping.CustomMeterDownlink);
 
 module.exports = router;
